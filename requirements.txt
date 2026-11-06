@@ -1,0 +1,57 @@
+attrs==26.1.0
+beautifulsoup4==4.15.0
+blinker==1.9.0
+certifi==2026.7.22
+cffi==2.1.1
+charset-normalizer==3.5.1
+click==8.5.0
+clr_loader==0.3.1
+ddgs==9.16.0
+et_xmlfile==2.0.0
+Flask==3.1.3
+flatbuffers==25.12.19
+idna==3.19
+itsdangerous==2.2.0
+Jinja2==3.1.6
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+lxml==6.1.2
+MarkupSafe==3.0.3
+numpy==2.5.2
+olefile==0.47
+onnxruntime==1.29.0
+opencv-python==5.0.0.93
+openpyxl==3.1.5
+packaging==26.3
+pillow==12.3.0
+primp==2.0.0
+protobuf==7.36.0
+pyclipper==1.4.0
+pycparser==3.0
+pypdf==6.16.2
+pypdfium2==5.13.0
+pystray==0.19.5
+python-docx==1.2.0
+python-pptx==1.0.2
+pythonnet==3.1.0
+pywebview==6.2.1
+PyYAML==6.0.3
+rapidocr-onnxruntime==1.2.3
+referencing==0.37.0
+requests==2.34.2
+rpds-py==2026.6.3
+shapely==2.1.2
+six==1.17.0
+soupsieve==2.9.2
+striprtf==0.0.33
+typing_extensions==4.16.0
+urllib3==2.7.0
+websocket-client==1.9.0
+Werkzeug==3.1.8
+waitress==3.0.2   # v1.0.646：生产 WSGI 服务器（SSE 长连接线程池治理）；缺失时 backend.py 自动回退 Werkzeug
+xlrd==2.0.2
+
+# ---- 可选：语音输入（v1.0.523-5，不进 PyInstaller 打包，运行时按需检测）----
+# pip install faster-whisper==1.2.1 "av==16.1.0" huggingface_hub==2.2.0
+# 注意：av 必须 <17（av17+ 移除 metadata_errors 参数，faster-whisper 1.2.1 未适配）；
+# 模型经 HF 镜像下载（HF_ENDPOINT=https://hf-mirror.com，代码已内置）

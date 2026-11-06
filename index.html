@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%233a7afe%27/%3E%3Ctext x=%2716%27 y=%2723%27 font-size=%2718%27 text-anchor=%27middle%27%3E%F0%9F%A4%96%3C/text%3E%3C/svg%3E"/>
+<title>企微伴侣 · Agent</title>
+<link rel="stylesheet" href="/css/style.css">
+
+
+</head>
+<body>
+<div id="bootOverlay">
+  <div class="bo-logo">微</div>
+  <div class="bo-title">企业微信伴侣</div>
+  <div class="bo-sub">WeCom Companion</div>
+  <div class="bo-track"><div class="bo-bar" id="bootBar"></div><span class="bo-pct" id="bootPct">0%</span></div>
+  <div class="bo-status" id="bootStatus">正在启动…</div>
+  <div class="bo-foot" id="bootFoot"></div>
+</div>
+<script src="js/00-boot.js"></script>
+<div class="app">
+  <!-- 侧边栏导航 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo">微</div><div class="brand-t">企微伴侣</div><button class="sb-dark" id="sbDarkBtn" onclick="toggleDarkSidebar()" title="深色/浅色模式" aria-label="切换深色或浅色模式">🌙</button><button class="sb-toggle fold-ic" id="sbToggle" onclick="toggleSidebar()" title="收起侧栏" aria-label="收起/展开侧栏" aria-expanded="true"></button></div>
+    <nav class="nav">
+      <!-- v1.0.644（用户："快捷入口 放工作台按钮上面 且默认折叠，需要用户使用再去点展开按钮"）：
+           分组从「➕ 更多」里提出来，钉在导航顶端、工作台之上——它是"发起一次任务"的入口，
+           和模板/技能中心不是一类东西，不该被埋在一个默认收起的折叠组下面。
+           默认折叠这条保持 v1.0.635 的判断（宁可多点一下，也不要它常年摊开吃掉任务列表）。
+           v1.0.640 那条仍然成立：折叠钮在行尾，与「更多」的箭头同位同尺寸。 -->
+      <div class="side-group collapsed" id="quickGroup">
+        <div class="side-group-head" onclick="toggleQuickFold()" title="展开/收起快捷入口">
+          <span>⚡ 快捷入口</span>
+          <button class="side-group-edit" onclick="event.stopPropagation();openQuickEditor()" title="新增/删除/排序/编辑快捷入口">✏️ 编辑</button>
+          <button class="fold-ic quick-caret" id="quickFoldBtn" onclick="event.stopPropagation();toggleQuickFold()" title="展开/收起快捷入口" aria-label="展开/收起快捷入口" aria-expanded="false"></button>
+        </div>
+        <div class="side-group-body" id="quickLinksBox"></div>
+      </div>
+      <div class="nav-item active" tabindex="0" role="button" data-view="work" onclick="openView('work')"><span class="nav-ic">💬</span><span class="nav-t">工作台</span></div>
+      <div class="nav-item" tabindex="0" role="button" data-view="study" onclick="openView('study')"><span class="nav-ic">🎓</span><span class="nav-t">学习中心</span></div>
+      <div class="nav-item" tabindex="0" role="button" data-view="chat" onclick="openView('chat')"><span class="nav-ic">🤖</span><span class="nav-t">助手对话</span></div>
+      <div class="nav-item" tabindex="0" role="button" data-view="knowledge" onclick="openView('knowledge')"><span class="nav-ic">📚</span><span class="nav-t">知识库</span></div>
+      <!-- v1.0.490（对齐参考稿）：低频入口收进「更多」折叠组，侧栏只留高频项
+           v1.0.635：折叠图标统一——按钮/箭头一律 ▾，收起态由 aria-expanded 驱动旋转 -90°，
+           不再各处换字（此前一处 ▶/▼、一处 ▸/▾、一处 »/«、一处「▾ 折叠」文字） -->
+      <div class="nav-more-btn" id="navMoreBtn" tabindex="0" role="button" aria-expanded="false" aria-controls="navMore" onclick="toggleNavMore()" title="模型/模板/技能/经验/连接器/产物库/定时任务/运行组件/帮助">
+        <span class="nav-ic">➕</span><span class="nav-t">更多</span><span class="nm-caret fold-caret" aria-hidden="true"></span>
+      </div>
+      <div id="navMore" class="nav-more" style="display:none">
+        <div class="nav-item nav-sub" tabindex="0" role="button" data-view="models" onclick="openView('models')"><span class="nav-ic">🧠</span><span class="nav-t">模型</span></div>
+        <!-- v1.0.644：「⚡ 快捷入口」从这里搬到导航顶端（工作台之上）——它和模板/技能中心不同类，
+             是"发起一次任务"的入口；埋在一个默认收起的折叠组里，用户每次都要先点开「更多」。
+             v1.0.635 撤掉的「🤖 自动任务」分组不复活：auto_send 的差异仍由行尾「即发」徽章表达。 -->
+        <div class="nav-item nav-sub" tabindex="0" role="button" data-view="templates" onclick="openView('templates')"><span class="nav-ic">📋</span><span class="nav-t">模板</span></div>
+        <div class="nav-item nav-sub" tabindex="0" role="button" data-view="skills" onclick="openView('skills')"><span class="nav-ic">🧩</span><span class="nav-t">技能中心</span></div>
+        <div class="nav-item nav-sub" tabindex="0" role="button" data-view="experiences" onclick="openView('experiences')"><span class="nav-ic">📒</span><span class="nav-t">经验库</span></div>
+        <div class="nav-item nav-sub" tabindex="0" role="button" data-view="connectors" onclick="openView('connectors')"><span class="nav-ic">🔌</span><span class="nav-t">连接器</span></div>
+        <div class="nav-item nav-sub" tabindex="0" role="button" data-view="workspace" onclick="openView('workspace')"><span class="nav-ic">📂</span><span class="nav-t">产物库</span></div>
+        <div class="nav-item nav-sub" tabindex="0" role="button" data-view="schedules" onclick="openView('schedules')"><span class="nav-ic">⏰</span><span class="nav-t">定时任务</span></div>
+    <div class="nav-item nav-sub" tabindex="0" role="button" data-view="components" onclick="openView('components')"><span class="nav-ic">🔧</span><span class="nav-t">运行组件</span></div>
+        <div class="nav-item nav-sub" tabindex="0" role="button" data-view="help" onclick="openView('help')"><span class="nav-ic">❓</span><span class="nav-t">帮助</span></div>
+      </div>
+      <!-- v1.0.355：设置移到导航最底部，加分隔线与功能视图区隔 -->
+      <div class="nav-sep"></div>
+      <div class="nav-item" tabindex="0" role="button" data-view="settings" onclick="openView('settings')"><span class="nav-ic">⚙</span><span class="nav-t">设置</span></div>
+    </nav>
+    <!-- v1.0.491：任务列表移入侧栏（原工作台内任务栏），吃掉侧栏剩余空间
+         v1.0.497：原 conv-bar 全部功能并入此处——＋新建 / ☑批量管理 / ⋯菜单归档·删除 / 点击切换 -->
+    <div class="tasksec" id="taskSec">
+      <div class="tr-hd"><span class="tr-title">🗂 任务<span class="tr-n" id="taskRailN"></span></span>
+        <span style="flex:1"></span>
+        <button class="side-fold" id="taskAddBtn" onclick="newConversation()" title="新建任务对话" aria-label="新建任务对话">＋</button>
+        <button class="side-fold" id="taskBatchBtn" onclick="toggleConvBatch()" title="批量管理：勾选多条会话批量删除" aria-label="批量管理：勾选多条会话批量删除">☑</button>
+        <button class="side-fold fold-ic" id="taskFoldBtn" onclick="toggleTaskRail()" title="展开/收起任务列表" aria-label="展开/收起任务列表" aria-expanded="true"></button>
+      </div>
+      <!-- v1.0.598 C8：任务检索。今天 80+ 个会话时，靠滚列表找旧任务不现实；
+           这一行只按标题子串过滤，批量管理模式与空列表时由 renderTaskRail() 收起 -->
+      <div class="tr-search" id="trSearchRow">
+        <input id="trSearchInput" type="search" placeholder="🔍 搜索任务" oninput="trSearch(this.value)" aria-label="搜索任务标题" />
+        <button class="tr-search-x" onclick="trSearchClear()" title="清空搜索" aria-label="清空搜索">✕</button>
+      </div>
+      <div class="tr-batch" id="trBatchOps" style="display:none">
+        <button onclick="convSelectAll()">全选</button>
+        <button onclick="convSelectInvert()">反选</button>
+        <button class="danger" onclick="convBatchDelete()" title="删除勾选的会话及其全部消息，不可恢复">删除(<span id="convBatchN">0</span>)</button>
+        <button onclick="toggleConvBatch()">完成</button>
+      </div>
+      <div class="tr-list" id="taskRailList"></div>
+    </div>
+    <!-- v1.0.633：原这里的「🤖 自动任务」「⚡ 快捷入口」两个常驻分组收进上方导航，
+         腾出的纵向空间整块给任务列表（.tasksec 同时去掉 38vh 上限，否则挪了分组列表也不会变长）。
+         v1.0.644：其中「⚡ 快捷入口」又提回导航**顶端**（工作台之上）——它吃掉的是导航自己的
+         一行标题（分组默认折叠），而不是任务列表的纵向空间，与这条不冲突。 -->
+    <!-- v1.0.507：状态横向三点化——不显示文字，悬停 title 显示详情 -->
+    <div class="side-foot sb-status" title="连接状态">
+      <span class="sb-dot-item off" id="sbConn" title="后端：未连接"><span class="dot"></span></span>
+      <span class="sb-dot-item off" id="sbWecom" title="企微：未绑定"><span class="dot"></span></span>
+      <span class="sb-dot-item off" id="sbModel" title="模型：未配置"><span class="dot"></span></span>
+    </div>
+    <!-- v1.0.499：侧栏右缘拖拽条——拖动调宽（150-420px），双击恢复默认 168 -->
+    <div class="sb-resize" id="sbResize" title="拖拽调宽 · 双击恢复默认"></div>
+  </aside>
+
+  <!-- 主区 -->
+  <main class="main">
+    <div class="topbar">
+      <span id="cdpStatus"><span class="dot off"></span>企微 未连接</span>
+      <span id="modelStatus"><span class="dot off"></span>未配置模型</span>
+      <span style="margin-left:auto"></span>
+      <span id="verBadge" class="ver">v?</span>
+    </div>
+
+    <!-- ===== 工作台：企微实时窗口选择 + 操作该窗口的聊天 ===== -->
+    <section class="view active" id="view-work">
+      <div class="work-status">
+        <div class="kv" id="wecomKv2">
+          <div><b>企微</b><span id="wState">检测中…</span></div>
+          <div><b>窗口</b><span id="wWin2">0</span> 个可访问</div>
+          <div><b>模型</b><span id="mName2">—</span></div>
+        </div>
+        <button class="primary" id="btnBind" onclick="doBind()" title="重新检测并绑定企微窗口；企微未带调试端口时会提示重启企微（未保存的草稿可能丢失）">重新绑定</button>
+        <button class="ghost" onclick="refreshStatus()">刷新状态</button>
+        <!-- v1.0.523-2 任务运行看板条；v1.0.594 从 work-grid 首行搬进本行右侧：
+             原来它独占一整行（约 64px + 10px 间距），专注对话时白白吃掉聊天区一行高度。
+             矮窗口下 .work-status 本身是 flex-wrap，装不下就整条换行，不会互相盖。 -->
+        <div id="dashStrip" class="dash-strip" style="display:none"></div>
+      </div>
+      <div class="work-tabs" id="workTabs"><button class="wt active" id="tab-pane" onclick="switchWorkTab('pane')"><span>📺</span>窗口操作</button><button class="wt" id="tab-chat" onclick="switchWorkTab('chat')"><span>💬</span>专注对话</button></div>
+<div class="work-grid">
+        <!-- 左：窗口选择 + 内容 -->
+        <div class="card livecard" id="liveCard">
+          <div class="cardhd">
+            <h3>企微实时窗口</h3>
+            <div class="cardhd-r">
+              <label class="follow-toggle" title="开启后每 3 秒自动刷新选中窗口的截图/正文/可操作元素；关闭则仅在选中窗口、点「刷新」或 agent 操作完成后刷新"><input type="checkbox" id="followChk" checked onchange="toggleFollow()"/><span class="sw"></span><span class="ft-txt">实时跟随</span></label>
+              <button class="foldbtn fold-ic" id="liveFoldBtn" onclick="toggleLivePane()" title="折叠窗口栏" aria-label="折叠窗口栏" aria-expanded="true"></button>
+            </div>
+          </div>
+          <div class="livefold" id="liveFold">
+          <div class="wtools">
+            <button class="primary" onclick="captureAuto()" title="抓取当前活动窗口（自动锁定最长正文窗口）">🎯 抓取当前窗口</button>
+            <button class="ghost iconbtn" onclick="refreshWindows();refreshSelection()" title="刷新窗口列表与内容">🔄</button>
+          </div>
+          <div class="scroll">
+            <div class="shotbox">
+              <div class="shothead"><span class="sec-t">📸 实时预览</span> <button class="ghost smbtn" id="parentBtn" style="display:none" onclick="goParent()" title="当前窗口由另一个窗口触发打开，点击切回父窗口（更快的返回方式）">← 返回父窗口</button> <span id="followState" class="follow-state"></span> <button class="ghost smbtn fold-ic" id="shotFoldBtn" style="margin-left:auto" onclick="toggleShotFold()" title="折叠/展开预览条（折叠后露出下方窗口列表）" aria-label="折叠或展开预览条" aria-expanded="false"></button></div>
+              <img id="liveShot" alt="窗口预览" title="点击查看大图（看清页面具体内容）" onclick="openShotViewer()" style="display:none;width:100%;max-height:280px;object-fit:contain;border-radius:var(--r-md);border:1px solid var(--border);background:#0b0e14;cursor:zoom-in"/>
+              <div id="shotHint" class="hint">点选下方窗口，这里显示其实时画面</div>
+            </div>
+            <div class="sec">
+              <div class="sec-hd"><span class="sec-t">🗂 窗口列表</span><span id="winCount" class="sec-n"></span></div>
+              <div id="winList" class="winlist" style="max-height:264px; overflow-y:auto"><span style="color:var(--muted);font-size:var(--fs-sm)">自动刷新中…</span></div>
+            </div>
+            <div class="sec">
+              <div class="sec-hd"><span class="sec-t">📄 窗口内容</span></div>
+              <div class="capture" id="captureView" style="max-height:220px">选择窗口后自动显示正文内容。</div>
+            </div>
+            <div class="sec">
+              <div class="sec-hd"><span class="sec-t">⚙ 可操作元素</span><span class="sec-n">按类型着色 · 点击填入右侧</span></div>
+              <div id="elemList" style="max-height:140px; overflow:auto"><span style="color:var(--muted);font-size:var(--fs-sm)">选择窗口后自动加载可操作元素</span></div>
+            </div>
+          </div>
+          </div>
+        </div>
+        <!-- 右：聊天（作用于选中的窗口） -->
+        <div class="card livecard">
+          <h3 id="chatCardTitle">Agent 对话</h3>
+          <div class="sub op-target none" id="opTargetHint" onclick="toggleOpTargetMin()" title="点击折叠/展开运行状态条（折叠后 agent 状态更新不再撑高对话区）">未选企微窗口 · 可直接对话（详细引导见右侧对话区）</div>
+          <!-- v1.0.497：原 conv-bar（新建/切换/归档/删除）整行拆除，功能并入侧栏任务区，腾出聊天纵向空间 -->
+          <!-- v1.0.511 清爽化：原内联 border/bg 样式移除，交给 style.css 统一聊天皮肤 -->
+          <div class="chatpane" id="opPane">
+            <div class="empty">
+              <span class="em-ic">🤖</span>
+              <span class="em-t">企微伴侣 · 待命中</span>
+              <span class="em-sub">点选左侧企微窗口可指挥 agent 操作它；不开企微也能直接对话、操控本机（截图/文件/命令行）<br/>可点下方快捷提示词，或直接输入指令开始；也可把文件/文件夹拖进这里让 agent 分析</span>
+            </div>
+          </div>
+          <div class="chatbar" style="border:none;padding:10px 0 0;">
+            <div class="bar-top">
+              <span class="chat-state" id="opState" aria-live="polite"></span>
+              <span class="model-chip" id="opModelChip" style="display:none" title="当前模型与上下文占用"></span>
+              <button class="ghost" id="opStop" onclick="stopChat('opPane')" disabled>⏹ 停止</button>
+              <button class="ghost" onclick="clearChat('opPane')" title="清空当前对话区的全部消息记录（本地+会话历史），不可恢复">清空</button>
+              <button class="ghost" onclick="openTplPicker()" title="任务模板：结构化输入、固定输出格式（内置场景模板即点即用）">模板</button>
+              <button class="ghost" id="opTeamBtn" onclick="toggleOpTeam()" title="智能体团队：本轮任务走「规划 → 执行 → 审查」多智能体分工（审查不通过自动修补；更慢更严谨，适合复杂任务）">👥</button>
+              <button class="ghost foldbtn fold-ic" id="opFoldBtn" onclick="toggleOpToolbar()" title="折叠快捷提示词与模式栏，给聊天内容腾地方" aria-label="折叠快捷提示词与模式栏，给聊天内容腾地方" aria-expanded="false"></button>
+            </div>
+            <div id="opToolbarExtra">
+            <div class="chips" id="opChips"></div>
+            <!-- v1.0.519：模式选择行移除——新建任务弹窗已是唯一的模式选择入口
+                 （手动直发弹窗选、自动任务/快捷入口预设固定直接干），工具栏重复 -->
+            </div><!-- /opToolbarExtra -->
+            <div class="composer">
+              <div class="attach-strip" id="attachStrip_op"></div>
+              <textarea id="opInput" class="composer-input" placeholder="例如：帮我看下屏幕上有什么 / 整理下载文件夹 / 在搜索框输入「报销」· 可直接拖入文件/文件夹" onkeydown="inputKey(event,'sendOperate')" oninput="autoResize(this)"></textarea>
+              <div class="composer-bar">
+                <div class="model-dd" id="opModelDD">
+                  <button class="model-dd-btn" onclick="toggleModelDD(event,'op')" title="本任务使用的模型（按任务记忆）" aria-haspopup="true" aria-expanded="false">
+                    <span id="opModelName">默认模型</span><span class="mdd-caret">▾</span>
+                  </button>
+                  <div class="model-dd-menu" id="opModelMenu" role="menu"></div>
+                </div>
+                <!-- v1.0.590：权限级别（询问范围轴）——与模型并列，按任务记忆 -->
+                <div class="model-dd" id="opPermDD">
+                  <button class="model-dd-btn" onclick="togglePermDD(event,'op')" title="权限级别：agent 动手前要不要先问你" aria-haspopup="true" aria-expanded="false">
+                    <span id="opPermName">🛡 自动审批</span><span class="mdd-caret">▾</span>
+                  </button>
+                  <div class="model-dd-menu" id="opPermMenu" role="menu"></div>
+                </div>
+                <!-- v1.0.601：思考档位（按任务记忆）——此前只能去模型管理里逐模型改，
+                     对话里想"这次别想了/多想一会儿"没有入口 -->
+                <div class="model-dd" id="opThinkDD">
+                  <button class="model-dd-btn" onclick="toggleThinkDD(event,'op')" title="思考：关闭或调整推理强度（仅本次任务，不改模型配置）" aria-haspopup="true" aria-expanded="false">
+                    <span id="opThinkName">🧠 跟随模型</span><span class="mdd-caret">▾</span>
+                  </button>
+                  <div class="model-dd-menu" id="opThinkMenu" role="menu"></div>
+                </div>
+                <button class="ghost attachbtn" onclick="pickFile('opInput')" title="上传文件给 agent 分析（也可直接拖入上方对话区）">📎</button>
+                <button class="ghost" id="micOpBtn" onclick="toggleMic('opInput','micOpBtn')" title="语音输入：点击开始录音，再点结束并填入（本地转写，不外发）">🎤</button>
+                <button class="ghost" onclick="openBigEditor('opInput','sendOperate')" title="放大编辑" aria-label="放大编辑">⤢</button>
+                <button class="composer-send" id="opSendBtn" onclick="composerFire('opPane','opInput','sendOperate')" title="执行（Enter 发送）">↑</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 助手对话（不绑定窗口的通用对话） ===== -->
+    <section class="view" id="view-chat">
+      <div class="card" style="padding:0; flex:1; min-height:0; display:flex; flex-direction:column">
+        <div class="chatpane" id="setChatPane">
+          <div class="msg agent">配置好模型后，我可以读取你企微打开的网页窗口、帮你分析、起草内容，或按模板产出结构化结果。</div>
+        </div>
+        <div class="chatbar" style="border-top:none">
+          <div class="bar-top">
+            <span class="chat-state" id="setState" aria-live="polite"></span>
+            <span class="model-chip" id="setModelChip" style="display:none" title="当前模型与上下文占用"></span>
+            <button class="ghost" id="setStop" onclick="stopChat('setChatPane')" disabled>⏹ 停止</button>
+            <button class="ghost" onclick="clearChat('setChatPane')" title="清空当前对话区的全部消息记录（本地+会话历史），不可恢复">清空</button>
+            <label style="font-size:var(--fs-sm);color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="setCtxChk" checked/> 附企微窗口</label>
+          </div>
+          <div class="composer">
+            <div class="attach-strip" id="attachStrip_set"></div>
+            <textarea id="setChatInput" class="composer-input" placeholder="让 agent 干活，例如：看看我企微现在开着什么 · 可直接拖入文件/文件夹" onkeydown="inputKey(event,'sendSetChat')" oninput="autoResize(this)"></textarea>
+            <div class="composer-bar">
+              <div class="model-dd" id="setModelDD">
+                <button class="model-dd-btn" onclick="toggleModelDD(event,'set')" title="本对话使用的模型（独立记忆）" aria-haspopup="true" aria-expanded="false">
+                  <span id="setModelName">默认模型</span><span class="mdd-caret">▾</span>
+                </button>
+                <div class="model-dd-menu" id="setModelMenu" role="menu"></div>
+              </div>
+              <!-- v1.0.590：权限级别（助手对话同样按会话记忆） -->
+              <div class="model-dd" id="setPermDD">
+                <button class="model-dd-btn" onclick="togglePermDD(event,'set')" title="权限级别：agent 动手前要不要先问你" aria-haspopup="true" aria-expanded="false">
+                  <span id="setPermName">🛡 自动审批</span><span class="mdd-caret">▾</span>
+                </button>
+                <div class="model-dd-menu" id="setPermMenu" role="menu"></div>
+              </div>
+              <!-- v1.0.601：思考档位（与工作台同款，按会话独立记忆） -->
+              <div class="model-dd" id="setThinkDD">
+                <button class="model-dd-btn" onclick="toggleThinkDD(event,'set')" title="思考：关闭或调整推理强度（仅本对话，不改模型配置）" aria-haspopup="true" aria-expanded="false">
+                  <span id="setThinkName">🧠 跟随模型</span><span class="mdd-caret">▾</span>
+                </button>
+                <div class="model-dd-menu" id="setThinkMenu" role="menu"></div>
+              </div>
+              <button class="ghost attachbtn" onclick="pickFile('setChatInput')" title="上传文件给 agent 分析（也可直接拖入上方对话区）">📎</button>
+              <button class="ghost" onclick="openBigEditor('setChatInput','sendSetChat')" title="放大编辑" aria-label="放大编辑">⤢</button>
+              <button class="ghost" id="micSetBtn" onclick="toggleMic('setChatInput','micSetBtn')" title="语音输入：点击开始录音，再点结束并填入（本地转写，不外发）">🎤</button>
+              <button class="composer-send" id="setSendBtn" onclick="composerFire('setChatPane','setChatInput','sendSetChat')" title="发送（Enter）">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 模型管理 ===== -->
+    <section class="view" id="view-models">
+      <div class="view-head">
+        <h2>🧠 模型管理</h2>
+        <p class="sub">多个 OpenAI 兼容模型；可设默认，模板也可指定不同模型。点某模型「判断」按钮可设它为<b>判断大模型</b>——启用双模型分工：大模型负责判断/决策，默认小模型跑工具循环（卡住时自动拉大模型兜底）。留空=单模型。</p>
+        <button class="primary" style="margin-left:auto" onclick="showModelForm()">+ 添加模型</button>
+        <button class="ghost" onclick="scanModels()" title="扫描本机 Ollama / LM Studio 等本地推理服务，把发现的模型加入列表">自动扫描本地模型</button>
+        <button class="ghost" onclick="testModel()" title="测「默认模型」的接口连通性（发一条短消息验证）；要逐个验证别的模型请用「综合评测」勾选后跑">测试连接</button>
+        <button class="ghost" onclick="benchModel()" title="综合评测：可选多个模型，支持并发/逐个；7 项常用能力打分（基础响应/指令遵循/中文生成/逻辑推理/工具调用意图/长文提取/响应速度），加权总分 100">🧪 综合评测</button>
+        <span class="btnsep" aria-hidden="true"></span>
+        <button class="ghost" onclick="exportModelCfg()" title="把全部模型定义与判断大模型导出为 JSON 文件备份">导出配置</button>
+        <button class="ghost" onclick="document.getElementById('importModelFile').click()" title="从导出的 JSON 文件恢复模型配置">导入配置</button>
+        <input type="file" id="importModelFile" accept=".json,application/json" style="display:none" onchange="importModelCfg(this)"/>
+        <span class="pill" id="mTest" style="display:none"></span>
+      </div>
+      <!-- 🧪 综合评测面板（v1.0.319 起，v1.0.321 合并入口）：选模型 + 并发/逐个 + 7 项打分对比 -->
+      <div class="card" id="benchCard" style="padding:14px; margin-bottom:14px; display:none">
+        <div class="cardhead">
+          <h3 style="margin:0">🧪 综合评测</h3>
+          <span class="sub grow" style="margin:0;font-weight:400">7 项常用能力打分（基础响应/指令遵循/中文生成/逻辑推理/工具调用意图/长文提取/响应速度），加权总分 100</span>
+        </div>
+        <div id="benchOpts" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px"></div>
+        <div class="cardhead">
+          <label style="font-size:var(--fs-sm);cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="radio" name="benchMode" value="sequential" checked/> 逐个测试</label>
+          <label style="font-size:var(--fs-sm);cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input type="radio" name="benchMode" value="parallel"/> 并发测试</label>
+          <span class="sub grow" style="font-size:var(--fs-xs)">并发更快，但本地 GPU 模型可能相互争抢导致速度失真</span>
+          <button class="primary smbtn" id="benchRunBtn" style="margin-left:auto" onclick="runBench()" title="对选中模型做 7 项能力打分（速度/质量/工具调用），约 1-3 分钟，逐项实时出分">开始评测</button>
+        </div>
+        <div id="benchBody"></div>
+      </div>
+      <!-- 📊 Token 用量统计（v1.0.252）：数据来自 dist/logs/usage_*.jsonl 独立存档 -->
+      <div class="card" style="padding:14px; margin-bottom:14px" id="usageCard">
+        <div class="cardhead">
+          <h3 style="margin:0">📊 Token 用量统计</h3>
+          <span class="sub" style="margin:0" id="usageRangeLabel">近 14 天</span>
+          <div style="margin-left:auto; display:flex; gap:4px" id="usageRangeBtns">
+            <button class="ghost smbtn" onclick="loadUsageStats(7)" data-days="7">7 天</button>
+            <button class="ghost smbtn" onclick="loadUsageStats(14)" data-days="14">14 天</button>
+            <button class="ghost smbtn" onclick="loadUsageStats(30)" data-days="30">30 天</button>
+            <button class="ghost smbtn" onclick="loadUsageStats()" title="重新加载">🔄</button>
+            <button class="ghost smbtn" onclick="clearUsageStats()" title="删除全部用量存档（dist/logs/usage_*.jsonl）">🗑 清空</button>
+          </div>
+        </div>
+        <div class="usage-cards" id="usageCards"></div>
+        <div class="usage-chart-wrap">
+          <div class="sec-t" style="margin:2px 0 8px">📈 每日用量<span style="color:var(--muted);font-weight:400;font-size:var(--fs-xs)">（绿=输入 / 蓝=输出）</span></div>
+          <div class="usage-chart" id="usageChart"></div>
+          <div class="usage-chart-x" id="usageChartX"></div>
+        </div>
+        <div id="usageModelsWrap" style="display:none">
+          <div class="sec-t" style="margin:10px 0 8px">🧠 按模型分布</div>
+          <div id="usageModels"></div>
+        </div>
+        <div class="sub" style="margin:6px 0 0; font-size:var(--fs-xs)" title="用量明细按月存档于 dist/logs/usage_YYYYMM.jsonl">明细存档：dist/logs/usage_YYYYMM.jsonl（按月分档，独立于运行日志）</div>
+      </div>
+      <div class="card" style="padding:14px">
+        <table id="modelTable"><thead><tr><th>名称</th><th>协议</th><th>模型 / 推理参数</th><th>API Key</th><th>操作</th></tr></thead><tbody></tbody></table>
+        <!-- v1.0.588：双模型分工是否真的生效要一眼可见（此前只有帮助文档知道"留空=单模型"，
+             用户把「judge 卡点自动介入」当成一直在线的安全网，实际从未启用） -->
+        <div id="judgeState" class="sub" style="margin-top:8px"></div>
+        <div id="modelForm" class="note" style="display:none; margin-top:10px">
+          <!-- 协议 + 接口地址（自定义协议时显示 base_url 输入；OpenAI 时下拉右侧展示完整提示） -->
+          <div class="grid2">
+            <div class="field">
+              <label>协议</label>
+              <select id="m_protocol" onchange="onProtocolChange()">
+                <option value="openai">OpenAI 兼容 / OpenAI-Compatible</option>
+                <option value="anthropic">Anthropic / Claude</option>
+                <option value="custom">自定义 / Custom</option>
+              </select>
+            </div>
+            <div class="field">
+              <label id="m_endpoint_label">API Base URL（接口地址）</label>
+              <input id="m_base" placeholder="https://api.example.com/v1"/>
+            </div>
+          </div>
+          <div class="field">
+            <label id="m_base_label">模型参数值（例如 gpt-4o 或 openai/gpt-4o）</label>
+            <div style="display:flex; gap:8px">
+              <input id="m_model" placeholder="gpt-4o 或 openai/gpt-4o" style="flex:1" oninput="onModelValInput()"/>
+              <button type="button" class="ghost" onclick="probeModels()" id="probeBtn" title="列出该服务可用的全部模型并推断思考强度支持">🔍 检测模型</button>
+            </div>
+            <div id="probePanel" style="display:none; margin-top:8px"></div>
+          </div>
+          <div class="grid2">
+          <div class="field">
+            <label>名称（默认同模型参数值，可自定义）</label>
+            <input id="m_name" placeholder="留空=同模型参数值" oninput="onNameInput()"/>
+          </div>
+            <div class="field">
+              <label>API Key</label>
+              <input id="m_key" type="password" placeholder="sk-...（留空=保留已有）"/>
+            </div>
+          </div>
+
+          <!-- 高级配置：6 个能力位，三列排布 -->
+          <div class="model-caps">
+            <div class="caps-row">
+              <label class="cap"><input type="checkbox" id="m_cap_tool" checked/> 工具调用</label>
+              <label class="cap"><input type="checkbox" id="m_cap_vision"/> 图片输入</label>
+              <label class="cap"><input type="checkbox" id="m_cap_thinking"/> 推理模式</label>
+              <label class="cap"><input type="checkbox" id="m_cap_only"/> 仅思考模式</label>
+              <label class="cap"><input type="checkbox" id="m_cap_off"/> 允许关闭思考</label>
+              <label class="cap"><input type="checkbox" id="m_cap_custom"/> 自定义协议</label>
+            </div>
+            <div class="caps-hint">
+              当前只会展示思考开关，不会展示强度选择；如果该模型支持强度调节，请在下方选择可用档位。
+            </div>
+          </div>
+
+          <!-- 思考强度：默认下拉 + 支持档位多选 -->
+          <div class="grid2">
+            <div class="field">
+              <label>默认思考强度</label>
+              <select id="m_effort">
+                <option value="">自动（使用请求层默认值）</option>
+                <option value="low">低 · 更快</option>
+                <option value="medium">中 · 均衡</option>
+                <option value="high">高 · 更深度</option>
+                <option value="xhigh">超高</option>
+                <option value="max">极致</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>支持的思考强度（多选）</label>
+              <div class="level-row">
+                <label class="lv"><input type="checkbox" class="m_lv" value="low"/> 低</label>
+                <label class="lv"><input type="checkbox" class="m_lv" value="medium"/> 中</label>
+                <label class="lv"><input type="checkbox" class="m_lv" value="high"/> 高</label>
+                <label class="lv"><input type="checkbox" class="m_lv" value="xhigh"/> 超高</label>
+                <label class="lv"><input type="checkbox" class="m_lv" value="max"/> 极致</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 输入/输出 token 档位 -->
+          <div class="grid2">
+            <div class="field">
+              <label>输入上下文（最大输入 token）</label>
+              <input id="m_in_tok" type="number" min="512" max="10000000" placeholder="留空=跟随默认"/>
+              <div class="tok-row">
+                <button type="button" class="tok-pick" onclick="pickToken('m_in_tok', 32768)">32K</button>
+                <button type="button" class="tok-pick" onclick="pickToken('m_in_tok', 65536)">64K</button>
+                <button type="button" class="tok-pick" onclick="pickToken('m_in_tok', 131072)">128K</button>
+                <button type="button" class="tok-pick" onclick="pickToken('m_in_tok', 262144)">256K</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>输出上限（单次输出 token）</label>
+              <input id="m_out_tok" type="number" min="64" max="1000000" placeholder="留空=跟随默认"/>
+              <div class="tok-row">
+                <button type="button" class="tok-pick" onclick="pickToken('m_out_tok', 8192)">8K</button>
+                <button type="button" class="tok-pick" onclick="pickToken('m_out_tok', 16384)">16K</button>
+                <button type="button" class="tok-pick" onclick="pickToken('m_out_tok', 32768)">32K</button>
+                <button type="button" class="tok-pick" onclick="pickToken('m_out_tok', 65536)">64K</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 高级（兼容旧字段）：思考预算 / 自定义扩展 / 启用默认 -->
+          <div class="grid2">
+            <div class="field">
+              <label>思考预算（Gemini thinking_budget，token 数，可空）</label>
+              <input id="m_budget" type="number" min="1" max="199999" placeholder="如 2048（留空=默认）"/>
+            </div>
+            <div class="field">
+              <label>🧩 自定义扩展参数（JSON，可空，最灵活）</label>
+              <textarea id="m_extra" rows="2" placeholder='如 {"temperature":0.5,"top_p":0.9}' style="font-family:var(--font-mono);font-size:var(--fs-sm)"></textarea>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <label><input type="checkbox" id="m_enabled" checked/> 启用</label>
+            <label><input type="checkbox" id="m_default"/> 设为默认</label>
+            <button class="primary" style="margin-left:auto" onclick="saveModel(this)">保存</button>
+            <button class="ghost" onclick="cancelModelForm()">取消</button>
+          </div>
+        </div>
+        <div id="scanPanel" style="display:none; margin-top:10px; border-top:1px dashed var(--border); padding-top:10px">
+          <div class="row" style="align-items:center; gap:8px">
+            <b>🔍 本地模型扫描</b>
+            <span id="scanHint" style="font-size:var(--fs-sm); color:var(--muted)"></span>
+            <button class="ghost smbtn" style="margin-left:auto" onclick="checkAllScanPanel()">全选</button>
+            <button class="ghost smbtn" onclick="invertScanPanel()">反选</button>
+          </div>
+          <div id="scanResults" style="margin-top:8px"></div>
+          <div class="row" style="margin-top:10px; gap:8px">
+            <button class="primary" id="scanImportBtn" style="display:none" onclick="importScanned()">导入选中模型</button>
+            <button class="ghost" onclick="$('scanPanel').style.display='none'">收起</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 任务模板 ===== -->
+    <section class="view" id="view-templates">
+      <div class="view-head">
+        <h2>📋 任务模板</h2>
+        <p class="sub">把常用任务固化成「填空即用」的模板：结构化输入 + 固定输出格式。工作台输入行上方点「📋 模板」即可直接使用；这里管理你的模板库（内置模板随软件提供，可运行不可删改）。</p>
+        <button class="ghost" style="margin-left:auto" onclick="openTplAI()" title="用一句话描述需求，AI 自动生成模板字段与结构">🤖 AI 生成模板</button>
+        <button class="primary" onclick="newTemplate()">+ 新建模板</button>
+      </div>
+      <div class="card" style="padding:14px">
+        <div id="tplList" style="margin-top:8px"></div>
+      </div>
+      <div class="card" id="tplEditor" style="display:none">
+        <h3 id="tplEditorTitle">模板编辑</h3>
+        <div class="grid2">
+          <div class="field"><label>模板名称</label><input id="t_name" placeholder="动词+对象，如：总结周报 / 提炼会议决议" /></div>
+          <div class="field"><label>使用模型</label><select id="t_model"></select></div>
+        </div>
+        <div class="field"><label>说明</label><input id="t_desc"/></div>
+        <div class="field"><label>系统提示词（角色/规则）</label><textarea id="t_prompt" placeholder="你是一个…严格按照输出 Schema 返回 JSON"></textarea></div>
+        <label class="field"><input type="checkbox" id="t_ctx"/> 运行时附上企微当前窗口内容作为上下文</label>
+        <div class="field">
+          <label>输入字段（结构化输入）</label>
+          <div id="t_inputs"></div>
+          <button class="ghost" onclick="addInputField()">+ 添加输入字段</button>
+        </div>
+        <div class="field">
+          <label>输出 JSON Schema（结构化输出）</label>
+          <textarea id="t_schema" style="min-height:150px">{
+  "type": "object",
+  "properties": {
+    "summary": {"type": "string"},
+    "items": {"type": "array", "items": {"type": "string"}}
+  },
+  "required": ["summary"]
+}</textarea>
+        </div>
+        <div class="row">
+          <button class="primary" onclick="saveTemplate()">保存模板</button>
+          <button class="primary" onclick="openRunPanel()">▶ 运行</button>
+          <button class="danger" onclick="delTemplate()" title="删除当前选中的模板，不可恢复">删除</button>
+          <button class="ghost" onclick="document.getElementById('tplEditor').style.display='none'">收起</button>
+        </div>
+      </div>
+      <div class="card" id="runPanel" style="display:none">
+        <h3>运行模板：<span id="runTplName"></span></h3>
+        <div class="sub">填入输入字段，运行后产出结构化 JSON。</div>
+        <div id="runInputs"></div>
+        <div class="row" style="margin-top:8px">
+          <button class="primary" id="runBtn" onclick="runTemplate()">运行并生成 JSON</button>
+          <button class="ghost" id="runStopBtn" onclick="stopTemplate()" style="display:none">⏹ 停止</button>
+          <button class="ghost" onclick="document.getElementById('runPanel').style.display='none'">关闭</button>
+        </div>
+        <div id="runResult" style="margin-top:10px"></div>
+      </div>
+    </section>
+
+    <!-- ===== 企微设置：绑定选项 + Webhook（首页不出现，放在这里） ===== -->
+    <!-- ===== v1.0.568：定时任务独立视图（原挤在设置页，用户要求单独入口） ===== -->
+    <section class="view" id="view-schedules">
+      <div class="view-head"><h2>⏰ 定时任务</h2><p class="sub">到点自动执行一轮完整 agent 任务，答复与产物落 产物库/产出/。软件需处于运行状态才会触发；执行期间不重复触发。</p></div>
+      <!-- v1.0.313：定时自动化（对齐 WorkBuddy 定时任务）——30s 调度粒度，执行走完整 agent -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">创建定时任务</h3>
+        <div class="sub">到点自动执行一轮完整 agent 任务，答复与产物落 产物库/产出/。示例：每天 09:00 汇总站内消息要点；每 30 分钟盯一次页面变化。</div>
+        <div id="schedList" style="margin:10px 0"></div>
+        <div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end">
+          <label class="field" style="flex:1;min-width:140px"><label>任务名</label><input id="sched_name" placeholder="每日简报"/></label>
+          <label class="field" style="flex:2;min-width:200px"><label>提示词（要 agent 干什么）</label><input id="sched_prompt" placeholder="联网检索行业要闻并汇总成表格，存到产出"/></label>
+          <label class="field" style="min-width:170px"><label>周期</label>
+            <select id="sched_cron" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm)">
+              <option value="daily 09:00">每天 09:00</option>
+              <option value="daily 12:00">每天 12:00</option>
+              <option value="daily 18:00">每天 18:00</option>
+              <option value="every 30 minutes">每 30 分钟</option>
+              <option value="every 60 minutes">每 60 分钟</option>
+              <option value="every 240 minutes">每 4 小时</option>
+            </select></label>
+          <button class="primary" onclick="saveSchedule(this)" title="把上方填写的时间与任务存为定时任务，到点自动触发">＋ 添加</button>
+        </div>
+        <div class="note">周期也支持自定义填「daily 08:30」或「every 15 minutes」。软件需处于运行状态才会触发；执行期间不重复触发。</div>
+      </div>
+    </section>
+    <!-- ===== v1.0.606：运行组件独立视图（原挤在设置页底部；用户要求单独模块，入口放「更多」里、定时任务之下、帮助之上） ===== -->
+    <section class="view" id="view-components">
+      <div class="view-head"><h2>🔧 运行组件</h2>
+        <p class="sub">外部依赖不打包进 exe。缺哪项只影响对应增强功能，核心对话与页面操作照常。</p></div>
+      <div class="card comp-card">
+        <div class="comp-toolbar">
+          <button class="primary" id="compInstallBtn" onclick="installAllComponents(this)">⬇️ 一键安装</button>
+          <button class="ghost" id="compProbeBtn" onclick="loadComponents(this)">🔍 重新体检</button>
+          <span class="comp-sum" id="comp_summary"></span>
+        </div>
+        <div class="comp-list" id="compList"></div>
+        <div class="comp-progress" id="compProgress" style="display:none"></div>
+        <details class="comp-adv">
+          <summary>OCR 版本维护</summary>
+          <div class="row" style="gap:6px">
+            <button class="ghost" id="optOcrBtn" onclick="ocrInstall()">安装 / 重装 OCR</button>
+            <button class="ghost" id="ocrCheckBtn" onclick="ocrCheckUpdates(this)">检查更新</button>
+            <button class="ghost" onclick="ocrUpdate('latest')">更新到最新版</button>
+            <button class="ghost" onclick="ocrUpdate('recommended')">恢复推荐版本</button>
+            <button class="ghost" id="ocrScBtn" onclick="ocrSelfCheckNow(this)" title="造一张已知文本图，走真实 OCR 引擎识别并比对——目录齐不代表能识别">🔁 立即自检</button>
+          </div>
+          <div class="comp-ocr-status" id="opt_ocr_status">—</div>
+          <div class="comp-ocr-status" id="opt_ocr_sc">真实识别自检：未运行</div>
+          <div class="note" id="opt_ocr_updates" style="display:none"></div>
+          <p class="comp-foot">OCR 缺失时软件会在碰到识别事务时自动下载（下载约 81MB、解压后占用约 226MB，国内镜像）；
+            「更新到最新版」是实验性组合，不兼容就点「恢复推荐版本」回退。</p>
+        </details>
+        <p class="comp-foot">进本页自动体检一次；有组件处于「安装中」时每 3 秒刷新，切走即停轮询。
+          「一键安装」把软件内能自动完成的项一次跑完（OCR / 语音 / Git / Node / dsh / 打包环境）——Git、Node 走<b>软件自装便携版</b>（解到 组件/ 目录，不写系统 PATH），不再需要你先去官网下载。</p>
+      </div>
+    </section>
+    <section class="view" id="view-settings">
+      <div class="view-head"><h2>⚙ 设置</h2><p class="sub">功能管理 · 个人信息与后台任务 · 自我修复 · 版本管理 · 安全中心 · 界面偏好 · 企微绑定 · 系统。</p></div>
+      <!-- v1.0.373 管理员模式：以管理员身份运行解锁系统级能力 -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">🛡 管理员模式</h3>
+        <div class="sub" id="adminState">检测中…</div>
+        <div class="sub" style="margin-top:6px">以管理员模式运行后解锁：① 系统级命令与服务（服务安装 / hosts / 系统配置）② 写入系统保护目录（Program Files 部署等）③ HKLM 全机注册表（全机自启）④ 系统级计划任务。⚠️ 危险命令的安全审批流程保持不变。</div>
+        <div class="row" style="gap:10px;margin-top:8px">
+          <button class="primary smbtn" id="adminRestartBtn" onclick="adminRestart(this)">🛡 以管理员模式重启</button>
+        </div>
+      </div>
+
+      <div class="set-group">能力开关</div>
+      <!-- v1.0.312：功能管理（对齐 WorkBuddy 插件管理/智能体团队/记忆沉淀）——总闸存 config，立即生效。
+           本卡 5 个 + 自我修复卡 2 个＝进 UI 的 7 个；键名唯一事实源 core/config_store.py::FEATURE_FLAGS，
+           js/11 的 _FF_KEYS 与本文件的 opt_ff_* id 由 tests/test_v617_flags.py 断言三者相等。
+           第 8 个键 auto_save_dialogs（另存为弹窗自动应答）刻意不进 UI——用户口径「弹窗零容忍」，只留手改后门。 -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">功能管理</h3>
+        <div class="row" style="flex-wrap:wrap;gap:10px">
+          <label class="field" style="flex:1;min-width:280px"><label><input type="checkbox" id="opt_ff_skills" onchange="saveFeatureFlags()"/> 技能系统</label>
+            <div class="note">关闭后所有技能与技能带出的工具全部停用，相关任务将无法执行（仅保留基础对话与 finish）。</div></label>
+          <label class="field" style="flex:1;min-width:280px"><label><input type="checkbox" id="opt_ff_connectors" onchange="saveFeatureFlags()"/> 连接器插件</label>
+            <div class="note">关闭后所有已配置连接器停用，依赖外部系统的任务不可用。</div></label>
+        </div>
+        <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:6px">
+          <label class="field" style="flex:1;min-width:280px"><label><input type="checkbox" id="opt_ff_team" onchange="saveFeatureFlags()"/> 智能体团队</label>
+            <div class="note">开启后可在聊天输入行点 👥 触发：复杂任务自动组建「规划 → 执行 → 审查」多智能体分工（审查不通过自动带意见补跑一轮）。</div></label>
+          <label class="field" style="flex:1;min-width:280px"><label><input type="checkbox" id="opt_ff_memory" onchange="saveFeatureFlags()"/> 本地记忆沉淀</label>
+            <div class="note">对话完成后自动提炼「值得长期记住的事实」存到 产物库/记忆/，后续会话自动注入。数据仅本地。
+              <a href="javascript:void(0)" onclick="viewMemory()">查看记忆</a> · <a href="javascript:void(0)" onclick="clearMemory()" title="清空 agent 全部长期记忆，不可恢复——建议先点「查看记忆」备份">清空</a></div></label>
+        </div>
+        <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:6px">
+          <label class="field" style="flex:1;min-width:280px"><label><input type="checkbox" id="opt_ff_evolve" onchange="saveFeatureFlags()"/> 技能自进化</label>
+            <div class="note">完成复杂任务后自动把可复用的工作流程沉淀为技能（技能中心带 🧬 自学 徽标）——下次同类任务自动套用，越用越聪明。每日 ≤5 次、上限 30 个、同名去重。</div></label>
+          <span style="flex:1;min-width:280px"></span>
+        </div>
+        <div class="field" style="margin-top:8px"><label>用户固定规则（你的长期指令，优先级最高，每次对话生效）</label>
+          <textarea id="opt_user_rules" rows="3" placeholder="每行一条，例如：&#10;始终用简体中文回复&#10;输出数据一律用表格&#10;不要未经确认执行删除类命令" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);resize:vertical"></textarea>
+          <div class="row" style="flex-wrap:wrap;row-gap:4px"><button class="ghost" onclick="saveUserRules(this)">保存规则</button>
+            <span class="note" style="flex:1 1 100%">三层记忆之一：用户级规则（此处）· 全局记忆（自动沉淀）· 项目上下文（知识库/经验库）</span></div>
+        </div>
+      </div>
+      <div class="set-group">个人信息 · 后台任务</div>
+      <!-- v1.0.614（审查 ㉙㉚㉛）：这些值此前只存在于 config.json，界面无处可填——
+           而快捷入口的提示词写着「个人信息在设置里」，报销自动填报读的正是这段。
+           DPAPI 加密由后端统一处理，这里只负责填与读；凭据永远不回显原文。 -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">👤 个人信息与凭据</h3>
+        <div class="sub">用于报销单等自动填写。这几项在本机以 Windows DPAPI 加密落盘（只有这台机器的这个账户能解开），不会出现在导出包或日志里。</div>
+        <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:8px">
+          <div class="field" style="flex:1;min-width:200px"><label>报销人姓名</label>
+            <input id="pii_name" maxlength="40" autocomplete="off" placeholder="自动填报销单时的姓名"/></div>
+          <div class="field" style="flex:1;min-width:200px"><label>银行账号</label>
+            <input id="pii_account" maxlength="48" autocomplete="off" inputmode="numeric" placeholder="用于收款账户字段"/></div>
+          <div class="field" style="flex:1;min-width:200px"><label>开户行</label>
+            <input id="pii_bank" maxlength="60" autocomplete="off" placeholder="如：招商银行 XX 支行"/></div>
+        </div>
+        <label class="field"><input type="checkbox" id="pii_mask"/> 银行账号发给模型前先脱敏（只留前 4 后 4）</label>
+        <div class="note">开启后自动填报销单时账号一栏给的是打码值，需要你手动补全完整账号——用它换「真实卡号不进大模型上下文」。默认关闭，保证自动填写一路通到底。</div>
+        <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">
+          <div class="field" style="flex:1;min-width:240px"><label>dsh 服务端点（PC 接管，可选）</label>
+            <input id="dsh_base_url" maxlength="200" autocomplete="off" placeholder="http://127.0.0.1:8100"/></div>
+          <div class="field" style="flex:1;min-width:240px"><label>dsh 访问凭据</label>
+            <input id="dsh_api_key" type="password" maxlength="200" autocomplete="new-password" placeholder="未设置"/></div>
+        </div>
+        <div class="row" style="flex-wrap:wrap;gap:10px">
+          <div class="field" style="flex:1;min-width:240px"><label>dsh 工作目录（可选，留空＝用软件默认目录）</label>
+            <input id="dsh_cwd" maxlength="260" autocomplete="off" placeholder="例如 D:\work\tasks"/></div>
+          <div class="field" style="flex:1;min-width:240px"><label>dsh 附加参数（可选）</label>
+            <input id="dsh_extra_args" maxlength="200" autocomplete="off" placeholder="例如 --timeout 600"/></div>
+        </div>
+        <div class="row" style="align-items:center;flex-wrap:wrap;gap:8px">
+          <button class="primary" onclick="savePersonal(this)">保存个人信息</button>
+          <button class="ghost smbtn" id="dshClearKey" onclick="clearDshKey(this)" style="display:none">清除凭据</button>
+          <span class="note" id="personalState"></span>
+        </div>
+        <div class="note">凭据只写不回显：留空保存＝保留原值不变。dsh 未配置也能用，只是「让 AI 操作这台电脑」的技能拿不到端点。</div>
+      </div>
+
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">⏱ 后台自动任务</h3>
+        <div class="sub">下面三项会在空闲时自己调用模型或读取企微页面——「谁在耗额度」在这里看得见、关得掉。</div>
+        <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:8px">
+          <label class="field" style="flex:1;min-width:280px"><label><input type="checkbox" id="bg_digests_daily"/> 每日工作小结</label>
+            <div class="note">按下面时间生成「产物库/日报/工作小结_日期.md」。<b>默认会调用大模型润色</b>（模型不可用时才降级为纯数据版）——不想让它耗额度就关掉本开关。</div></label>
+          <div class="field" style="min-width:120px;max-width:120px"><label>小结时间</label>
+            <input id="bg_digests_time" type="time" value="18:30"/></div>
+        </div>
+        <div class="row" style="flex-wrap:wrap;gap:10px">
+          <label class="field" style="flex:1;min-width:280px"><label><input type="checkbox" id="bg_kb_organize"/> 知识库空闲整理（建索引 + 查重，不挪文件）</label>
+            <div class="note">只在软件空闲时跑，纯本地。</div></label>
+          <label class="field" style="flex:1;min-width:280px"><label><input type="checkbox" id="bg_kb_digest"/> 知识库每日 AI 消化</label>
+            <div class="note">⚠️ 这项会调用大模型，按你的模型计费；不需要自动摘要就关掉。</div></label>
+        </div>
+        <label class="field"><input type="checkbox" id="bg_todo_watch"/> 待办变更轻提醒（读一次待办页，有变化弹托盘气泡）</label>
+        <div class="field" style="max-width:170px"><label>轮询间隔（分钟，最小 2）</label>
+          <input id="bg_todo_interval" type="number" min="2" max="180" step="1" value="10"/></div>
+        <div class="row" style="align-items:center;flex-wrap:wrap;gap:8px;margin-top:6px">
+          <button class="primary" onclick="saveBackground(this)">保存后台开关</button>
+          <span class="note" id="backgroundState"></span>
+        </div>
+      </div>
+
+      <!-- v1.0.650（F4，用户"全部优化"）：agent 一直在读 cfg["agent"] 的软预算四项，
+           但白名单只有 wecom 四键——有配置没 UI，只能手编 config.json；而 `agent` 段
+           当时连声明都没有，按"顶层段不声明会被 save 抹掉"的规矩，手改还会静默丢。 -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">🧮 任务资源预算（软预算）</h3>
+        <div class="sub">长任务"该收尾了"的判定：<b>累计输入 token</b> 或 <b>运行时长</b> 触顶时，agent 主动收口汇报，而不是无限续跑。
+          每完成一项（记一次进度）自动追加一份额度，所以<b>真在推进的批量任务不会被误掐</b>，被拦下的是零推进空转。
+          <b>0 ＝ 该项不参与判定</b>；两个基础额度都填 0 ＝ 彻底关闭软预算。</div>
+        <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:8px">
+          <div class="field" style="flex:1;min-width:150px"><label>基础输入 token 额度</label>
+            <input id="bg_soft_budget_tokens" type="number" min="0" step="1000" value="400000"/></div>
+          <div class="field" style="flex:1;min-width:130px"><label>基础时长额度（分钟）</label>
+            <input id="bg_soft_budget_minutes" type="number" min="0" step="5" value="120"/></div>
+          <div class="field" style="flex:1;min-width:170px"><label>每完成一项追加（token）</label>
+            <input id="bg_soft_budget_tokens_per_item" type="number" min="0" step="1000" value="200000"/></div>
+          <div class="field" style="flex:1;min-width:170px"><label>每完成一项追加（分钟）</label>
+            <input id="bg_soft_budget_minutes_per_item" type="number" min="0" step="5" value="15"/></div>
+        </div>
+        <div class="row" style="align-items:center;flex-wrap:wrap;gap:8px;margin-top:6px">
+          <button class="primary" onclick="saveBudget(this)">保存任务预算</button>
+          <button class="ghost smbtn" onclick="resetBudgetForm(this)" title="把四个输入框恢复成出厂默认（不保存，仍需点「保存任务预算」）">恢复默认值</button>
+          <span class="note" id="budgetState"></span>
+        </div>
+      </div>
+<div class="set-group">维护 · 数据 · 版本 · 安全</div>      <!-- v1.0.348 自我修复：错误日志+经验库 → LLM 体检 → 白名单自动修复 + 报告落盘
+           v1.0.354：操作按钮一行置顶，设置项（每日开关）移到卡片底部 -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">🩺 自我修复</h3>
+        <div class="sub">定期把运行日志中的错误与经验库条目喂给大模型体检：技能教训与经验条目自动落地（技能中心/经验库可查看撤销），代码与配置类问题只出报告待人工确认；历史报告在 产物库/自修复/。</div>
+        <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap;align-items:center">
+          <button class="primary smbtn" style="min-width:130px" id="repairRunBtn" onclick="repairBtnClick()" title="把近期运行日志与经验喂给模型做自修复体检，约 1-3 分钟，可中途取消">🩺 立即体检</button>
+          <button class="ghost smbtn" onclick="viewLatestRepairReport()" title="查看/刷新最近一次健康报告全文（体检进行中也可随时点）">📁 查看/刷新结果</button>
+          <span class="sub" style="font-size:var(--fs-xs)">体检产出的修复在下方「📦 版本管理 → 打包并重启」后生效</span>
+        </div>
+        <div id="repairResult" style="display:none;margin-top:8px"></div>
+        <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)">
+          <label><input type="checkbox" id="opt_ff_self_repair_daily" onchange="saveFeatureFlags()"/> 每日自动体检（距上次 ≥24h 且新增错误达标才真正调用模型）</label>
+          <div style="margin-top:6px">
+            <label><input type="checkbox" id="opt_ff_self_auto_fix" onchange="saveFeatureFlags()"/> 自动代码修复（实验性）：code_fix 类发现自动生成补丁并验证（语法编译+全量回归），<b>验证通过才落地提交</b>，失败自动还原原文件；每天最多尝试 3 次，配置/构建/数据文件永不改动</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- v1.0.642（用户："任务归档以后不在任务模块中显示"）：归档即离场，
+           归档项唯一的落脚地就是这个列表——在这里恢复或永久删除。 -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">📥 已归档任务 <span id="archivedCount" class="sub" style="font-weight:400"></span></h3>
+        <div class="sub">归档的任务会离开侧栏「任务」列表，长期保留在这里，直到你在这里点「永久删除」。
+          恢复后会重新出现在任务列表；永久删除会连同该会话的全部消息一起删掉，不可恢复。</div>
+        <div id="archivedListBox" style="margin-top:8px"><div class="sub">加载中…</div></div>
+        <div style="margin-top:6px"><button class="ghost smbtn" onclick="loadArchivedList()">🔄 刷新列表</button></div>
+      </div>
+
+      <!-- v1.0.358 版本管理：保留最近 N 个版本（N=version_store._KEEP，现为 3）的源码快照与 exe 备份，一键切换回退 -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">📦 版本管理</h3>
+        <div class="sub">保留最近 3 个版本（源码快照 + exe 备份），可一键切换回退：切换前自动快照当前版本（可随时切回）；源码与程序文件同步切换，<b>重启软件后生效</b>。</div>
+        <div id="versionListBox" style="margin-top:8px"><div class="sub">加载中…</div></div>
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="ghost smbtn" onclick="loadVersionList()">🔄 刷新列表</button>
+          <button class="ghost smbtn" onclick="rebuildNow(this)" title="用当前源码打包新版本：程序退出 → 打包约 1-2 分钟 → 自动重启（对话活动进行中会被打包保护拦下，稍后再试）">📦 打包并重启（用当前源码）</button>
+        </div>
+      </div>
+<div class="set-group">安全与自动化</div>      <!-- v1.0.320：安全中心（命令黑白名单/保护路径/删除审批/自动备份/审计） -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">🛡 安全中心</h3>
+        <div class="row" style="flex-wrap:wrap;gap:10px;margin-bottom:8px">
+          <!-- v1.0.590：权限级别（询问范围轴）——与下方「命令安全模式」（危险命中后的严重度轴）
+               是两个独立开关；这里是全局默认档，聊天输入框上可按单个任务临时改。 -->
+          <label class="field" style="flex:1;min-width:280px"><label>权限级别（全局默认）</label>
+            <select id="sec_perm_level" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm)">
+              <option value="ask_every">每次询问 — 动手前一律先确认（最安全，最费手）</option>
+              <option value="auto">自动审批 — 只在命中风险时确认（推荐）</option>
+              <option value="full">完全访问 — 不再确认（致命命令与系统目录仍拦）</option>
+            </select>
+            <div class="note">管<b>要不要先问你</b>：每次询问=所有写操作都确认；自动审批=只在命中风险时确认；完全访问=不确认。<b>例外中的例外</b>：批审的「自动点通过」（不可撤销真实提交）即使在「自动审批」档也会单独弹窗确认。<b>例外</b>：定时任务与刷课等后台会话没有弹窗可点，会<b>自动降为「自动审批」</b>（软件内已留日志），别把夜间任务放进需要逐次确认的写操作。聊天输入框上可对单个任务临时改档。<b>与下方「命令安全模式」是两件事</b>：这里决定问不问，那里决定命中危险模式后拦截还是放行。</div>
+          </label>
+          <label class="field" style="flex:1;min-width:280px"><label>命令安全模式</label>
+            <select id="sec_mode" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm)">
+              <option value="block">拦截危险命令（推荐）</option>
+              <option value="ask">危险命令弹窗审批</option>
+              <option value="pass">全部放行（不推荐）</option>
+            </select>
+            <div class="note">内置 20+ 危险模式（format/del /s/rm -rf/reg/shutdown/diskpart 等）。命中后按此模式处理。</div></label>
+          <label class="field" style="flex:1;min-width:280px"><label>删除审批阈值（60 秒内删除次数）</label>
+            <input id="sec_del_limit" type="number" min="1" max="100" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm)"/>
+            <div class="note">短时间连续删除超过该次数 → 弹窗审批（批准后原样重试放行一次）。删除始终只进回收站。</div></label>
+        </div>
+        <div class="field"><label>命令放行名单（正则，每行一条；命中即放行，优先级最高）</label>
+          <textarea id="sec_whitelist" rows="2" placeholder="例如：^git " style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:var(--font-mono)"></textarea></div>
+        <div class="field"><label>命令黑名单（追加内置危险模式，正则每行一条）</label>
+          <textarea id="sec_blacklist" rows="2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:var(--font-mono)"></textarea></div>
+        <div class="field"><label>保护路径（追加；这些目录禁止 agent 写入/删除，默认已含 Windows/Program Files 等）</label>
+          <textarea id="sec_paths" rows="2" placeholder="例如：D:\重要资料" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm)"></textarea></div>
+        <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:6px">
+          <label class="field" style="flex:1;min-width:200px"><label><input type="checkbox" id="sec_backup"/> 自动备份</label>
+            <div class="note">agent 覆盖/删除文件前自动备份到 产物库/备份/。</div></label>
+          <label class="field" style="min-width:160px"><label>备份总上限（MB）</label>
+            <input id="sec_backup_mb" type="number" min="50" max="10240" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm)"/></label>
+        </div>
+        <div class="row"><button class="primary" onclick="saveSecurity(this)">保存安全设置</button>
+          <button class="ghost" onclick="exportAudit()">导出审计日志</button>
+          <button class="ghost" onclick="clearAudit()" title="清空全部安全审计记录，不可恢复">清空审计</button></div>
+        <div class="field" style="margin-top:8px"><label>最近安全事件（最新 20 条）</label>
+          <div id="auditList" class="sub" style="max-height:180px;overflow:auto;font-size:var(--fs-xs);line-height:1.7"></div></div>
+      </div>
+<div class="set-group">偏好与系统</div>      <!-- v1.0.306：界面偏好（即时生效，存 localStorage，无需重启） -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">界面偏好</h3>
+        <div class="row">
+          <label class="field" style="flex:1"><label><input type="checkbox" id="opt_show_times" onchange="saveUiPref()"/> 显示消息时间</label></label>
+          <!-- v1.0.633：删「自动任务分组默认收起」开关——分组已收进「更多」，
+               外层「更多」本身就是它的折叠，再留一个内层开关只会互相打架 -->
+          <label class="field" style="flex:1"><label><input type="checkbox" id="opt_dark_mode" onchange="toggleDarkMode(this)"/> 🌙 深色模式</label></label>
+        </div>
+        <!-- v1.0.588：界面整体缩放。全站字号是绝对 px（187 处，无 rem），改 rem 需要同时
+             重写 JS 内联字号，风险大收益小；这里用 Chromium/WebView2 的 zoom 统一放大
+             （等价 Ctrl++），内联 px 也一起跟随，字号设置立刻可用。 -->
+        <div class="row">
+          <label class="field" style="flex:1"><label>界面字号 / 缩放
+            <select id="opt_ui_scale" onchange="toggleUiScale(this)">
+              <option value="s">小（90%）</option>
+              <option value="m" selected>标准（100%）</option>
+              <option value="l">大（115%）</option>
+              <option value="xl">特大（130%）</option>
+            </select></label></label>
+          <span class="note" style="flex:1">整窗按比例放大，含表格与按钮；看不清时选「大」或「特大」，无需重启。</span>
+        </div>
+        <div class="row">
+          <label class="field" style="flex:1"><label><input type="checkbox" id="opt_autostart" onchange="toggleAutostart(this)"/> 开机自动启动（登录 Windows 后自动运行）</label></label>
+          <label class="field" style="flex:1"><label><input type="checkbox" id="opt_autostart_admin" onchange="toggleAutostartAdmin(this)"/> 🛡 管理员模式自启动（计划任务最高权限，开机免 UAC 直接提权运行；切换时会弹 UAC 确认）</label></label>
+          <label class="field" style="flex:1"><label><input type="checkbox" id="opt_autostart_hide" onchange="toggleAutostartHide(this)"/> 启动后隐藏主窗口（最小化到任务栏托盘）</label></label>
+        </div>
+        <div class="note">消息时间默认显示；关闭后所有聊天窗格立即隐藏。以上设置即时生效并自动记忆，无需重启。开机自启写入系统注册表（HKCU\...\Run），关闭软件后下次开机自动运行。</div>
+      </div>
+      <!-- 语音转写组件（v1.0.536）：按需一键安装（pypi wheel → 产物库/组件/asr/），exe 保持轻量 -->
+      <div class="card" id="asrComponentCard" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin:0 0 6px">🎙 语音转写组件</h3>
+        <div class="sub" style="margin:0 0 8px" id="asrCompStatus">检测中…</div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+          <button class="primary smbtn" id="asrInstallBtn" onclick="installAsrComponent()" style="display:none">⬇ 一键安装（约 75MB，从 PyPI 下载，仅一次）</button>
+          <div id="asrInstallBar" style="flex:1; min-width:200px; display:none">
+            <div style="height:6px; background:var(--border,#e4e8ef); border-radius:3px; overflow:hidden"><div id="asrInstallFill" style="height:100%; width:0%; background:var(--accent); transition:width .4s"></div></div>
+            <div style="font-size:var(--fs-xs); color:var(--muted,#8792a3); margin-top:3px" id="asrInstallPhase"></div>
+          </div>
+        </div>
+        <div class="note" style="margin:8px 0 0">安装后对话输入框的 🎤 按钮可用：语音本地转写（faster-whisper，CPU），音频不外发；识别模型首次使用时自动从镜像下载（约 75MB）。</div>
+      </div>
+      <!-- 企微绑定（v1.0.306 起并入统一设置页） -->
+      <div class="card" id="bindCard" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">企微绑定</h3>
+        <div class="sub">首次打开自动检测企微并带 CDP 启动；再次打开只比对进程与窗口签名，没变就复用，不重启。</div>
+        <div class="row">
+          <label class="field" style="flex:1"><label><input type="checkbox" id="opt_auto_launch" onchange="saveWecomOpt()"/> 自动启动企微（未运行时）</label></label>
+          <label class="field" style="flex:1"><label><input type="checkbox" id="opt_auto_cdp" onchange="saveWecomOpt()"/> 自动注入 CDP（在跑但无调试端口时重启注入）</label></label>
+          <label class="field" style="flex:1"><label><input type="checkbox" id="opt_silent_mode" onchange="saveWecomOpt()"/> 静默后台执行（任务不抢焦点/不打断打字，推荐）</label></label>
+        </div>
+        <div class="field">
+          <label>CDP 调试端口（企微启动时带上 --remote-debugging-port）</label>
+          <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="opt_cdp_port" type="number" min="1024" max="65535" step="1" style="max-width:140px" onchange="_cdpPortDirty=true;saveWecomOpt()"/>
+            <span class="note" id="cdpPortNote">—</span>
+          </div>
+          <div class="note">v1.0.651：<b>端口被别的程序占着时，软件会自动往后找一个空闲端口并记住</b>，
+            不再死磕 9222（此前占用者若"应答但不成 CDP"，界面会一直卡在「窗口列表读取失败」）。
+            这里填的值是你的偏好；想固定不让它挪，就填一个确定没人用的端口。</div>
+        </div>
+        <div class="field">
+          <label>群机器人 Webhook（发消息用，可选）</label>
+          <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="opt_webhook" style="flex:1;min-width:260px" autocomplete="off" onchange="saveWecomOpt()"/>
+            <button class="ghost smbtn" id="webhookClearBtn" onclick="clearWecomWebhook(this)" style="display:none">清除地址</button>
+          </div>
+          <div class="note" id="webhookState">检测中…</div>
+          <div class="note">用于经群机器人把内容发回企微群。地址含密钥，<b>保存后不再回显</b>：输入框留空保存＝保持原地址不变，要换就直接填新地址。</div>
+        </div>
+        <!-- v1.0.582（用户反馈）：设置页补绑定入口——此前按钮只在「企微」页，未绑定时用户在此找不到 -->
+        <div class="row" style="margin-top:10px; align-items:center">
+          <button class="primary" onclick="doBind(this)">🔄 检测并绑定企微</button>
+          <span class="note" style="margin-left:6px">企微在运行但未带调试端口时，会弹确认询问是否重启企微注入。</span>
+        </div>
+      </div>
+      <!-- 系统信息 -->
+      <div class="card" style="padding:14px">
+        <h3 style="margin-top:0">系统</h3>
+        <div class="row">
+          <div class="field" style="flex:1"><label>软件版本</label><input id="opt_version" readonly/></div>
+          <div class="field" style="flex:1"><label>本地服务</label><input value="http://127.0.0.1:8787" readonly/></div>
+        </div>
+        <div class="field"><label>产物库（agent 文件产物统一存放处）</label>
+          <div class="row"><input id="opt_wsroot" readonly style="flex:1"/><button class="ghost" onclick="openWsFolder()">打开文件夹</button></div>
+        </div>
+        <div class="row"><button class="ghost" onclick="openLogFolder()">打开日志文件夹（companion.log / 用量存档）</button>
+          <button class="ghost" onclick="openWebUI(this)">🌐 打开网页版（系统浏览器）</button></div>
+      </div>
+    </section>
+
+    <!-- ===== 产物库 ===== -->
+    <section class="view" id="view-workspace">
+      <div class="view-head">
+        <h2>📂 产物库</h2>
+        <p class="sub" id="wsRoot">agent 产生的所有文件统一存放处</p>
+        <button class="ghost" style="margin-left:auto" onclick="openWsFolder()">打开文件夹</button>
+      </div>
+      <!-- v1.0.373（体验B6）自动化月报 +（C9）任务宏 -->
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center" id="monthlyStats">
+          <b style="font-size:var(--fs-md)">📊 本月自动化月报</b>
+          <span class="sub">加载中…</span>
+        </div>
+      </div>
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <h3 style="margin-top:0">🎬 任务宏</h3>
+        <div class="sub">成功完成的任务可以把工具操作序列存为「宏」——同构页面（如下周的同款审核单）一键重放，无需再过一遍模型。重放前请把企微页面恢复到任务起始状态。</div>
+        <div id="macroListBox" style="margin-top:8px"><div class="sub">加载中…</div></div>
+        <div style="margin-top:6px"><button class="ghost smbtn" onclick="loadMacroList()">🔄 刷新宏列表</button></div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div id="wsTree" class="scroll" style="max-height:60vh"></div>
+        <div id="wsFileView" style="display:none; margin-top:10px">
+          <div class="row" style="justify-content:space-between;margin-bottom:6px">
+            <b id="wsFileName"></b>
+            <button class="ghost" onclick="closeWsFile()">← 返回列表</button>
+          </div>
+          <pre class="capture" id="wsFileContent" style="max-height:46vh;white-space:pre-wrap"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 知识库（v1.0.294：课件/题库/制度 三分类） ===== -->
+    <section class="view" id="view-knowledge">
+      <div class="view-head">
+        <h2>📚 知识库</h2>
+        <p class="sub" id="kbRoot">分门别类的知识产物：课件（课程 OCR 素材）· 题库（答题记录）· 制度（公司制度原文）</p>
+        <button class="ghost" style="margin-left:auto" onclick="openKbFolder()">打开文件夹</button>
+      </div>
+      <!-- v1.0.301：后台维护（空闲自动整理 + 每日 AI 消化） -->
+      <div class="card" style="padding:10px 14px;margin-bottom:10px">
+        <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap">
+          <span id="kbOpsStatus" style="font-size:var(--fs-sm)">…</span>
+          <span id="kbOpsDetail" style="font-size:var(--fs-sm);color:var(--muted)"></span>
+          <span id="kbOpsHint" style="font-size:var(--fs-xs);color:var(--muted2,#a9b2c0)"></span>
+          <button class="ghost" style="margin-left:auto" onclick="kbRun('organize')" title="生成 INDEX 索引 + 查重告警，不移动/删除/重命名任何文件">🧹 立即整理</button>
+          <button class="ghost" onclick="kbRun('digest')" title="AI 消化最近 24h 更新的文件 → 消化/ 目录">📖 立即消化</button>
+        </div>
+      </div>
+      <!-- v1.0.477 企微聊天文件静默分析（知识库） -->
+      <div class="card" style="padding:14px; margin-bottom:10px">
+        <h3 style="margin-top:0">💬 企业微信文件分析 <span class="tag def">静默</span></h3>
+        <div class="sub">静默扫描企微本机存储的<b>明文数据</b>——聊天收发的附件（Cache/File）与企业网盘（WeDrive），解析内容入知识库（知识库/企微文件/），agent 可直接检索引用。增量指纹台账，只解析新增/变更文件。</div>
+        <!-- v1.0.588 合规闸：该功能会复制聊天附件正文，需明确授权后 daemon/手动扫描才运行 -->
+        <div id="warcConsent" class="note" style="margin-top:8px"></div>
+        <div id="warcStatus" class="row" style="gap:12px;flex-wrap:wrap;align-items:center;font-size:var(--fs-sm)">…</div>
+        <div class="row" style="margin-top:8px">
+          <button class="primary smbtn" id="warcScanBtn" onclick="wecomArchiveScan()">🔍 立即扫描入库</button>
+          <span class="note" id="warcNote" style="flex:1"></span>
+        </div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div id="kbTree" class="scroll" style="max-height:60vh"></div>
+        <div id="kbFileView" style="display:none; margin-top:10px">
+          <div class="row" style="justify-content:space-between;margin-bottom:6px">
+            <b id="kbFileName"></b>
+            <button class="ghost" onclick="closeKbFile()">← 返回列表</button>
+          </div>
+          <pre class="capture" id="kbFileContent" style="max-height:46vh;white-space:pre-wrap"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 学习中心（内置跑课引擎） ===== -->
+    <section class="view" id="view-study">
+      <div class="view-head">
+        <h2>🎓 学习中心</h2>
+        <p class="sub">内置自动跑课引擎：逐门完成学习平台全部未学课程（单门课独立会话，跑完自动清窗）</p>
+        <span id="studyStateChip" class="tag" style="margin-left:auto">未运行</span>
+      </div>
+      <div class="card" style="padding:14px">
+        <div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:10px">
+          <div><b>当前课程</b><div id="studyCurrent" style="color:var(--muted)">—</div></div>
+          <div><b>本次已跑</b><div id="studyCourseN">0 门</div></div>
+          <div><b>剩余未学</b><div id="studyUnlearned">—</div></div>
+          <div><b>跳过清单</b><div id="studySkips">0</div></div>
+          <div><b>平台失效</b><div id="studyDead">0</div></div>
+          <div><b>已运行</b><div id="studyElapsed">0 min</div></div>
+        </div>
+        <div class="row" style="gap:10px;margin-bottom:12px">
+          <button id="studyStartBtn" onclick="studyStart()">▶ 开始跑课</button>
+          <button id="studyStopBtn" class="ghost" onclick="studyStop()" disabled>⏹ 停止</button>
+          <span id="studyHint" style="color:var(--muted);font-size:var(--fs-sm)"></span>
+        </div>
+        <div style="font-size:var(--fs-sm);color:var(--muted);margin-bottom:6px">运行日志（最近 60 行，3s 自动刷新）</div>
+        <pre id="studyLogs" class="capture" style="max-height:44vh;white-space:pre-wrap;font-size:var(--fs-sm)">（未启动）</pre>
+      </div>
+    </section>
+
+    <!-- ===== 技能中心 ===== -->
+    <section class="view" id="view-skills">
+      <div class="view-head">
+        <h2>🧩 技能中心</h2>
+        <p class="sub">按需启用内置能力，也可自建自定义技能。关闭后，对应工具不会注入给 AI，也不会出现在提示词中。</p>
+      </div>
+      <div class="card" style="padding:14px">
+        <div class="row" style="margin-bottom:10px;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <span id="skillMode" class="pill" style="align-self:center"></span>
+          <span class="row" style="gap:8px;flex-wrap:wrap">
+            <button class="primary" onclick="createCustomSkill()">＋ 新建技能</button>
+            <button class="ghost" onclick="toggleHubPanel()">📚 公共技能库</button>
+            <span class="btnsep" aria-hidden="true"></span>
+            <button class="ghost" onclick="setAllSkills(true)">全选</button>
+            <button class="ghost" onclick="setAllSkills('toggle')">反选</button>
+            <button class="ghost" onclick="enableAllSkills(this)">全部启用（默认）</button>
+          </span>
+        </div>
+        <!-- v1.0.309：公共技能库（内置快照离线可用 + 可配置远程源，一键安装为自定义技能） -->
+        <div id="hubPanel" style="display:none;margin-bottom:14px;padding:12px;border:1px dashed var(--border);border-radius:var(--r-md);background:rgba(90,130,200,.04)">
+          <div class="row" style="margin-bottom:10px;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div style="flex:1;min-width:260px">
+              <b>📚 公共技能库</b>
+              <span id="hubMeta" class="sub" style="margin-left:10px"></span>
+            </div>
+            <span class="row" style="gap:8px;flex-wrap:wrap">
+              <button class="ghost" onclick="loadHub()">🔄 刷新</button>
+              <button class="ghost" onclick="toggleHubUrlForm()">远程源设置</button>
+            </span>
+          </div>
+          <div id="hubUrlForm" style="display:none;margin-bottom:10px">
+            <div class="row" style="gap:8px;flex-wrap:wrap">
+              <input id="hubUrl" placeholder="远程清单 URL（gitee/github raw 的 .json，留空用内置）" style="flex:1;min-width:260px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm)"/>
+              <button class="primary" onclick="saveHubUrl(this)">保存源并刷新</button>
+            </div>
+            <div class="note" style="margin-top:6px">清单格式：{"skills":[{"id","name","desc","icon","category","prompt","tools"}]}。拉取失败自动回退内置快照。</div>
+          </div>
+          <div id="hubList" class="skill-grid"></div>
+        </div>
+        <div id="skillList" class="skill-grid"></div>
+        <div class="row" style="margin-top:14px">
+          <button class="primary" onclick="saveSkills(this)">保存启用设置</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 经验库 ===== -->
+    <section class="view" id="view-experiences">
+      <div class="view-head">
+        <h2>📒 经验库</h2>
+        <p class="sub">记录各模块踩过的坑与对应解决方法，可编辑。新任务遇到同类模块时，把相关经验作为参考。</p>
+      </div>
+      <div class="card" style="padding:14px">
+        <div id="expForm" style="display:none;margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:var(--r-md);background:rgba(120,140,170,.05)">
+          <div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:10px">
+            <label style="font-size:var(--fs-md)">所属模块
+              <select id="expModule" style="margin-left:6px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r-sm);min-width:180px"></select>
+            </label>
+            <input id="expId" type="hidden">
+          </div>
+          <div class="row" style="margin-bottom:10px">
+            <textarea id="expProblem" rows="2" placeholder="问题描述：哪个模块、什么场景、出了什么问题" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);resize:vertical"></textarea>
+          </div>
+          <div class="row" style="margin-bottom:12px">
+            <textarea id="expSolution" rows="3" placeholder="解决方法：具体怎么做的、调整了什么参数/步骤，下次如何避免" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);resize:vertical"></textarea>
+          </div>
+          <div class="row" style="gap:8px">
+            <button class="primary" onclick="saveExp(this)">保存经验</button>
+            <button class="ghost" onclick="closeExpForm()">取消</button>
+          </div>
+        </div>
+        <div class="row" style="margin-bottom:12px">
+          <button class="primary" onclick="openExpForm()">＋ 新增经验</button>
+        </div>
+        <div id="expList"></div>
+      </div>
+    </section>
+
+    <!-- ===== 连接器 ===== -->
+    <section class="view" id="view-connectors">
+      <div class="view-head">
+        <h2>🔌 连接器</h2>
+        <p class="sub">接入外部服务（内部 OA、SaaS、REST API 等）。配置并启用后，对应工具会注入给 AI 使用。</p>
+      </div>
+      <div class="card" style="padding:14px">
+        <div id="connList"></div>
+      </div>
+    </section>
+
+    <!-- ===== 帮助（v1.0.250）===== -->
+    <section class="view" id="view-help">
+      <div class="view-head">
+        <h2>❓ 帮助</h2>
+        <p class="sub">使用方式速查：软件总览、快速上手、三工作模式、智能体团队、模型管理、数据四件套（连接器/经验库/产物库/知识库）、多窗口跟随、文件交付、三层记忆、定时任务、电脑操控、安全中心、技能中心、自我修复与版本回滚、持续答题（无人值守）、学习中心、常见问题。</p>
+      </div>
+      <div class="card help-box">
+
+        <details open>
+          <summary>🪞 这是什么（30 秒了解本软件）</summary>
+          <div class="hb-body">
+            <p><b>企微伴侣</b> = 跑在你电脑上的 AI 员工：它通过 CDP 接管企业微信页面，用大模型驱动一套工具链（读页面/点击/输入/传文件/跑命令/写文档），把「学习中心刷课、答题考试、OA 审批、财务单据核查、周报整理」这类重复劳动变成一句话任务。</p>
+            <ul>
+              <li><b>三层进化体系</b>：经验库（跨任务记忆）→ 技能系统（28 个内置+可安装+自进化）→ 自我修复（体检日志、自动沉淀教训、实验性自动代码修复）；</li>
+              <li><b>可靠性地板</b>：死循环熔断、judge 大模型卡点介入、全量回归测试、软件内版本管理（近 3 版一键回退）；</li>
+              <li><b>安全边界</b>：删除只进回收站、保护路径/危险命令拦截、密钥 DPAPI 加密、审计留痕；</li>
+              <li><b>模型自由</b>：任意 OpenAI 兼容端点 + Ollama 本地；多模型分工（默认模型跑工具循环，卡点自动升级判断大模型）。</li>
+            </ul>
+            <div class="hb-tip">💡 下面按使用场景展开；遇到问题先看「❓ 常见问题」，再不行看「📂 文件与数据位置」找我日志。</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>🚀 快速上手（三步开始）</summary>
+          <div class="hb-body">
+            <ol>
+              <li>在<b>左侧窗口列表</b>点选一个企微窗口（聊天将作用于它）；</li>
+              <li>到<b>工作台</b>：点击上方<b>快捷标签</b>或左侧栏<b>快捷入口</b>填入任务（或在输入框直接输入指令）；</li>
+              <li>点 <kbd>执行</kbd>。agent 会自动读页面、操作、汇报结果。</li>
+            </ol>
+            <div class="hb-tip">💡 也可以在「助手对话」页提问，不影响工作台任务。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🧭 三工作模式（🤖 直接干 / 📋 先出方案 / 💬 只问答）</summary>
+          <div class="hb-body">
+            <p>工作台输入框上方有一排模式按钮，当前模式高亮显示。三种模式的具体用法：</p>
+            <ol>
+              <li><b>🤖 直接干</b>（默认）—— agent 直接执行：<ol style="margin:6px 0 10px 18px">
+                <li>选中左侧一个企微窗口（或不选，纯本机任务）；</li>
+                <li>保持 <span class="tag">🤖 直接干</span> 高亮；</li>
+                <li>输入任务（如「把今天的答题数据下载下来」）→ 点 <kbd>执行</kbd>；</li>
+                <li>agent 开始操作，聊天流里会出现 🔧 工具卡片，随时可点 <kbd>⏹</kbd> 停止。</li>
+              </ol></li>
+              <li><b>📋 先出方案</b>—— 先确认再动手：<ol style="margin:6px 0 10px 18px">
+                <li>点 <span class="tag">📋 先出方案</span> 切换模式；</li>
+                <li>输入完整任务描述 → 点 <kbd>发送</kbd>（状态条会显示「⏳ 模型响应中… Ns」，远端模型首包慢属正常，等待期间可随时点 <kbd>⏹</kbd> 停止）；</li>
+                <li>agent 回复一份方案（目标 / 步骤 / 需补充信息 / 影响面），<b>不执行任何操作</b>；</li>
+                <li>满意 → 点回复底部的 <span class="tag">▶ 按此方案执行</span>，方案自动载入输入框并切回「直接干」，点 <kbd>执行</kbd> 开工；不满意 → 直接改需求重新要方案。</li>
+              </ol></li>
+              <li><b>💬 只问答</b>—— 只读不写：<ol style="margin:6px 0 10px 18px">
+                <li>点 <span class="tag">💬 只问答</span> 切换模式；</li>
+                <li>问任何需要读页面/读文件的问题（如「这个页面表单还缺哪几个必填项」）；</li>
+                <li>agent 只读取分析、用 Markdown 回答；所有写类操作（点击/输入/写文件/跑命令）都会被拦截并提示。</li>
+              </ol></li>
+            </ol>
+            <div class="hb-tip">💡 模式只对当次发送生效，可随时切换；「先出方案」等待期间想改主意，点 <kbd>⏹</kbd> 停止即可（1 秒内生效）。配合 👥 智能体团队可叠加使用。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🗂 多任务并行与模型选择（每任务独立）</summary>
+          <div class="hb-body">
+            <ol>
+              <li><b>同时跑多个任务</b>：工作台发任务 A 后不用等——点左侧任务区 <kbd>＋</kbd> 新建并发任务 B；运行中的会话标 <span class="tag">⏳ 运行中</span>，点条目随时切换查看实时输出，后台任务不受影响；</li>
+              <li><b>每任务选模型</b>：输入框下方 <span class="tag">模型下拉</span>——任务 A 选本地小模型跑批、任务 B 选远端大模型出方案；选择<b>按会话记忆</b>（下次打开该对话仍生效），「默认模型」= 模型管理页设的全局默认；</li>
+              <li><b>停止/继续</b>：停止按钮只作用于当前查看的会话；「继续」恢复断点时会保持该会话自己的模式与模型；</li>
+              <li><b>助手对话页</b>同样有独立模型下拉，且与工作台任务互不干扰——两边可同时各跑一个。</li>
+            </ol>
+            <div class="hb-warn">⚠️ 多任务同时用同一个模型服务时，请留意其并发能力（单槽 vLLM 会排队）——给重任务分配不同端点/模型才能真提速。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>📚 知识库自动维护（整理 / 消化）</summary>
+          <div class="hb-body">
+            <ol>
+              <li><b>自动维护</b>（默认开）：软件空闲 10 分钟后，后台自动 ① 重建知识库索引 INDEX.md（含查重告警）② 用 AI 消化最近 24h 新增的文件生成《每日消化》。你在跑任务时它绝不插手；</li>
+              <li><b>手动整理</b>：点 <kbd>🧹 立即整理</kbd> → 状态条变「⏳ 正在整理…（已 Ns）」→ 完成弹通知。几秒即完，产物是 <code>知识库/INDEX.md</code>；</li>
+              <li><b>手动消化</b>：点 <kbd>📖 立即消化</kbd> → 「⏳ 正在消化…（LLM 生成中）」约 1-2 分钟 → 完成后《消化_今日.md》出现在 <code>知识库/消化/</code>；</li>
+              <li><b>没执行的原因</b>：自动消化需要 ① 空闲 10 分钟+ ② 最近 24h 有新增文件。两个条件都不满足时状态条会显示「今日无需消化（24h 无新增）」；LLM 失败当天最多重试 3 次，失败次数会显示在状态里。</li>
+            </ol>
+            <div class="hb-tip">💡 企微聊天文件（附件/网盘，静默分析入库）同样参与整理与消化；消化过的内容 agent 都能检索引用。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>💬 企微聊天文件静默分析（自动建知识库）</summary>
+          <div class="hb-body">
+            <p>软件会静默读取企微的<b>明文文件存储</b>，把聊天里收发的文档自动变成 agent 可检索的知识：</p>
+            <ol>
+              <li>默认自动：启动 2 分钟后首次扫描，之后每 6 小时增量一次（只解析新增/变更，不重复消耗）；</li>
+              <li>来源：聊天附件（<code>Cache/File/</code>）+ 企业网盘（<code>WeDrive/</code>）中的 pdf/docx/xls/ppt/txt/md 等文档；</li>
+              <li>入库位置：<code>知识库/企微文件/</code>（按 来源/账号/年月 归档，带来源元信息头）， INDEX 索引与每日消化都会覆盖它；</li>
+              <li>首次使用：知识库页「💬 企业微信文件分析」面板 → <kbd>我已了解，授权并扫描</kbd>。<b>未授权时该功能完全不运行</b>（定时与手动都不读取任何文件），授权可随时撤回；</li>
+              <li>扫描件（图片型 PDF）会标「待 OCR」，装好 OCR 组件后可识别。</li>
+            </ol>
+            <div class="hb-warn">⚠️ 边界：聊天<b>文字</b>消息是企微加密存储（合规设计），本功能不解析；如需聊天文字存档，走企业管理端「会话存档」。开关：<code>config.wecom_archive.enabled</code>（功能开关）+ <code>config.wecom_archive.consent</code>（读取授权，两者都为真才跑）。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>👥 智能体团队（规划 → 执行 → 审查）</summary>
+          <div class="hb-body">
+            <p>输入框旁点 <kbd>👥</kbd>（亮起为绿色）后发送，复杂任务自动组建三个角色分工：</p>
+            <ol>
+              <li><b>规划者</b>（判断大模型）：分析任务产出执行计划，注入给执行者；</li>
+              <li><b>执行者</b>（主 agent）：按计划干活；</li>
+              <li><b>审查者</b>（判断大模型）：对照任务检查结果——通过（PASS）直接交付；不通过（REVISE）自动带着 ≤3 条修补意见再执行一轮后交付。</li>
+            </ol>
+            <p>规划与审查阶段都会以工具卡片（<span class="tag">👥 团队·规划</span> / <span class="tag">👥 团队·审查</span>）实时显示在聊天流里。</p>
+            <div class="hb-warn">⚠️ 规划/审查各多花一次大模型调用，简单任务不必开。总开关在「设置 → 功能管理 · 智能体团队」，关闭后 👥 自动降级为单智能体。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🧠 模型管理（多模型 / 双模型分工 / 跑分 / 用量）</summary>
+          <div class="hb-body">
+            <ul>
+              <li><b>多模型</b>：任意 OpenAI 兼容端点（vLLM/LM Studio/Ollama/云端），可配多个并设「默认模型」；本地 Ollama 走原生 think:false 快速通道（判断类短问答提速数倍）；</li>
+              <li><b>双模型分工</b>：小模型跑工具主循环（省钱快速），「判断大模型」只在卡点/决策时介入（ask_judge 工具、死循环熔断时自动升级给建议）——同问有缓存不重复烧钱；</li>
+              <li><b>一键跑分</b>：流式速度（首字延迟/tok/s）+ 3 道质量题 + 工具调用能力，帮你选默认模型；</li>
+              <li><b>Token 用量</b>：按模型/按天统计（独立存档，设置页看图表）；</li>
+              <li><b>容错</b>：流式中断自动重试、空闲/空转熔断、<b>自我修复体检</b>失败自动换最多 2 个备用模型（任务主循环不自动换模型——失败会明确提示你换模型重试，避免同一任务在不同模型间静默漂移）；</li>
+              <li><b>安全</b>：api_key DPAPI 加密落盘，界面/导出均脱敏。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>🗃 数据四件套（连接器 / 经验库 / 产物库 / 知识库）</summary>
+          <div class="hb-body">
+            <ul>
+              <li><b>🔌 连接器</b>：配置 Base URL + Key 后，agent 可直接调用公司内部/第三方 HTTP API（密钥脱敏存储）；</li>
+              <li><b>📒 经验库</b>：agent 干活时用 save_experience 主动沉淀「问题→解法」，你在管理页增删改查；后续同类任务自动遵循（跨任务记忆，自修复也会写入）；</li>
+              <li><b>📂 产物库</b>：agent 一切产出的统一家——产出文档、下载附件、上传暂存、对话记录、技能包、日志；界面可浏览/预览/删除（进回收站）；</li>
+              <li><b>📚 知识库</b>：课件/题库/制度三分类自动归档；空闲时自动整理（INDEX.md）+ 每日消化摘要；<b>答题前会自动检索课件原文作答</b>（内部考题多出自课件，命中率显著提升）。</li>
+            </ul>
+            <div class="hb-tip">💡 全部数据在本地 产物库/ 目录，自愈/体检/版本库也都在这里，随时可备份。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🪟 多窗口与窗口跟随</summary>
+          <div class="hb-body">
+            <ul>
+              <li><b>窗口树</b>：左侧实时列出企微所有页面（含弹出的课程/考试子窗口）与父子关系；</li>
+              <li><b>跟随窗口</b>：任务进行中 agent 会"跟随"它正在操作的页面——你手动开新页时跟随自动切换；后台学习/考试页新窗口弹出会<b>自动最小化</b>，不弹到你脸上（后台 tucker 线程）；</li>
+              <li><b>加载等待</b>：读取页面时自动等 DOM 就绪+正文稳定+关键词重试，不读到半加载快照；</li>
+              <li><b>同源 iframe</b>：课程内容页的 iframe 内部也能读取与操作。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>📦 软件版本管理（近 3 版一键回退）</summary>
+          <div class="hb-body">
+            <ul>
+              <li>设置 → 「📦 版本管理」列出最近 <b>3 个版本</b>：源码快照 + exe 备份 + 每版<b>变更清单</b>（相对上一版改了什么，自动生成）；</li>
+              <li>点「⏪ 切换」一键回退：切换前自动快照当前版本（可随时切回），源码与程序文件同步回退，<b>重启软件生效</b>；</li>
+              <li>每次打包构建自动登记，无需手动维护。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>📊 让 agent 交付文件（Excel / Word / PPT）</summary>
+          <div class="hb-body">
+            <p>agent 不只给建议——可以直接产出可验收的文件到 <code>产物库/产出/</code>：</p>
+            <ul>
+              <li><b>create_excel</b>：多工作表 Excel，表头自动加粗蓝底+冻结首行、列宽自适应，单元格可直接写公式（如 =SUM(B2:B10)）；</li>
+              <li><b>create_docx</b>：Word 文档，支持标题层级/正文/项目符号/编号列表/表格；</li>
+              <li><b>create_pptx</b>：PPT 演示文稿，标题+要点版式、演讲者备注、首页自动做封面。</li>
+            </ul>
+            <p><b>示例指令</b>：「把这份明细按类别汇总，生成 Excel 给我，合计行用公式」「根据下面要点做一份 5 页 PPT」。生成后 agent 会汇报文件路径，产物库里可直接打开。</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>🧠 三层记忆（规则 / 全局 / 项目）</summary>
+          <div class="hb-body">
+            <ul>
+              <li><b>用户固定规则</b>（优先级最高）：「设置 → 功能管理」底部多行编辑你的长期指令（如"始终用表格输出""不要未经确认执行删除命令"），每次对话自动注入；</li>
+              <li><b>全局记忆</b>（自动沉淀）：每轮对话结束后自动提炼「值得长期记住的事实」（偏好/项目事实/约定/教训），存到 <code>产物库/记忆/MEMORY.md</code>（去重、200 条上限），后续所有对话自动注入——告诉过它一次的事，新会话它还记得；</li>
+              <li><b>项目上下文</b>：知识库（课件/题库/制度三分类）与经验库（模块→问题→解法），任务相关时自动参考。</li>
+            </ul>
+            <p>记忆可在设置页查看/清空；总开关「设置 → 功能管理 · 本地记忆沉淀」。数据全部本地。</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>⏰ 定时任务（到点自动执行）</summary>
+          <div class="hb-body">
+            <p>「更多 → ⏰ 定时任务」页创建，到点自动执行一轮完整 agent 任务，结果落 <code>产物库/产出/定时_&lt;名字&gt;_&lt;时间&gt;.md</code>：</p>
+            <ul>
+              <li><b>周期写法</b>：<code>daily 09:00</code>（每天 9 点）或 <code>every 30 minutes</code>（每 30 分钟，最小 5 分钟）；</li>
+              <li><b>示例</b>：每天 09:00「联网检索行业要闻并汇总成表格存到产出」；每 60 分钟「检查 XX 页面有没有更新，有变化告诉我」；</li>
+              <li><b>管理</b>：列表可启停/立即跑一次/删除；执行期间不会重复触发。</li>
+            </ul>
+            <div class="hb-tip">💡 软件需处于运行状态才会触发调度。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🎬 任务宏（操作序列一键重放）</summary>
+          <div class="hb-body">
+            <ol>
+              <li><b>存</b>：agent 成功完成一个同构页面任务后，气泡操作栏点 <kbd>💾 存为宏</kbd> → 起个名字（工具调用序列就存下来了）；</li>
+              <li><b>放</b>：「产物库 → 🎬 任务宏」列表点 <kbd>▶ 重放</kbd>——把企微页面恢复到任务起始状态后确认，软件逐步重放（每步 toast 报 ✅/❌）；</li>
+              <li><b>适用</b>：结构不变、只换数据的页面（下周的同款审核单、每周期性报表）；页面结构变了就别重放，重新跑 agent；</li>
+              <li><b>管理</b>：🗑 删除不可恢复；重放是确定性操作，<b>零 LLM 消耗</b>、比 agent 快一个量级。</li>
+            </ol>
+          </div>
+        </details>
+
+        <details>
+          <summary>📊 月报审计流水线（22 份批量核验）</summary>
+          <div class="hb-body">
+            <ol>
+              <li><b>跑</b>：工作台让 agent「审计本月月报」，或设置定时任务自动跑（每次约 3 分钟，全脚本驱动零 LLM）；</li>
+              <li><b>看结果</b>：产物库顶部「📊 本月自动化月报」卡片显示本月轮数/审阅份数/✅green ❌red；逐份明细在 <code>产物库/台账/月报判定.json</code> 与产出报告；</li>
+              <li><b>重跑</b>：分支机构补传附件后只需复查——agent 调 <code>run_audit_flow(mode="retry")</code> 只重跑上轮非 green 的项（30 秒级）；中断后 <code>mode="resume"</code> 断点续跑不丢已审结果；</li>
+              <li><b>防呆</b>：同一时间只允许一条流水线（双跑互踩 CDP 会被拒绝）。</li>
+            </ol>
+          </div>
+        </details>
+
+        <details>
+          <summary>🖥 电脑操控（不开企微也能用）</summary>
+          <div class="hb-body">
+            <ul>
+              <li><b>6 个 OS 级工具</b>：截屏、文件增删改查（删除只进回收站）、执行命令、启动/结束程序、剪贴板、系统信息——企微之外的电脑杂活直接交办；</li>
+              <li><b>接管通道</b>：pc_* 搞不定的多步骤复杂任务（跑测试修 bug/批量处理），agent 会委托独立 harness agent 自主完成；</li>
+              <li><b>未启动企微</b>：完全不影响——直接说"帮我看下屏幕上有什么"或"把下载文件夹按类型整理"，照常执行。</li>
+            </ul>
+            <div class="hb-warn">⚠️ 破坏性操作（删除/覆盖/停服务）agent 会先向你确认才执行。</div>
+          </div>
+        </details>
+
+                <details>
+          <summary>🛡 安全中心（权限级别 / 命令拦截 / 路径保护 / 删除审批 / 自动备份 / 审计）</summary>
+          <div class="hb-body">
+            <p>「设置 → 🛡 安全中心」集中管理 agent 的电脑操作安全：</p>
+            <ul>
+              <li><b>权限级别</b>（v1.0.590，管<b>要不要先问你</b>）：🔒 <b>每次询问</b>——所有写操作（点页面/输入/发消息/写文件/跑命令/执行页面脚本）动手前都弹窗确认；🛡 <b>自动审批</b>（默认）——只在命中风险规则时确认；⚡ <b>完全访问</b>——不再确认。聊天输入框下方的下拉框可对<b>单个任务</b>临时改档并随任务记忆（挂起后点「继续」不掉档）；全局默认在 设置 → 安全中心 → 权限级别。<b>注意它与「命令安全模式」是两条独立的轴</b>：权限级别决定问不问，命令安全模式决定命中危险模式后拦截还是放行；选「完全访问」<b>不会</b>解除致命命令与系统保护目录的硬拦截。<b>一个必须知道的例外</b>：定时任务、刷课等<b>后台会话</b>没有弹窗可点，运行时会把「每次询问」<b>自动降为「自动审批」</b>（`agent/loop.py` 有日志留痕）——所以夜间任务里的写操作不受「每次询问」保护；</li>
+              <li><b>命令安全</b>（管<b>命中危险模式后怎么处置</b>）：内置 30+ 危险命令模式（format / del /s / rm -rf / reg delete / shutdown / diskpart / sc delete / certutil -decode / netsh advfirewall set / IEX 下载器等）。三模式：<b>拦截</b>（默认，直接拒绝）/ <b>弹窗审批</b>（命中后问你，批准一次性放行）/ <b>全放行</b>（不推荐）。支持自定义放行/黑名单正则；</li>
+              <li><b>路径保护</b>：Windows、Program Files、ProgramData 默认禁止 agent 写入/删除，可追加自己的保护目录（如 D:////重要资料）；</li>
+              <li><b>删除审批</b>：删除始终只进回收站（可还原）；60 秒内连续删除超过阈值（默认 10 次）会弹窗审批，批准仅对当次重试放行；</li>
+              <li><b>自动备份</b>：agent 覆盖/删除文件前自动备份到 产物库/备份/（按日分目录，总上限超限自动裁最旧），误操作可回找；</li>
+              <li><b>审计日志</b>：所有 pc_run / 文件修改类操作、以及权限级别挂起的每一次「批准 / 拒绝」都记入 产物库/日志/安全审计.jsonl，设置页可看最近 20 条、导出 txt、清空。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>🧩 技能中心（内置 / 公共库 / 自定义）</summary>
+          <div class="hb-body">
+            <ul>
+              <li><b>28 个内置技能</b>：窗口操作、答题、财务审核、数据整理、电脑操控、翻译润色、代码助手、每日简报等，开关控制工具与提示词注入；</li>
+              <li><b>公共技能库</b>：技能中心点「📚 公共技能库」——12 个精选技能（周报/会议纪要/邮件/代码审查/SQL/Git/主题简报/页面监控/磁盘体检/批量整理/屏幕解读）一键安装；支持配置远程清单 URL 获取更多；</li>
+              <li><b>自定义技能</b>：点「＋ 新建技能」自建，也可让 AI 帮你优化提示词；</li>
+              <li><b>总闸</b>：「设置 → 功能管理 · 技能系统」关闭后全部技能停用。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>🩺 自我修复 & 技能版本回滚</summary>
+          <div class="hb-body">
+            <p>软件自带一套<b>自我维护机制</b>（设置 → 🩺 自我修复）：</p>
+            <ul>
+              <li><b>体检内容</b>：把运行日志中的错误行 + 经验库条目喂给大模型分析，找出反复出现的问题与可沉淀的经验；</li>
+              <li><b>自动修复（白名单）</b>：技能教训（追加到对应技能提示词，带【自修复沉淀】标记，可在技能中心回滚）与经验条目（写入经验库）自动落地；</li>
+              <li><b>只出报告</b>：代码级 bug 与配置类问题绝不自动改自身代码/配置，只生成修复建议报告落盘 <code>产物库/自修复/健康报告_*.md</code>，由你确认后再处理；</li>
+              <li><b>进度可见</b>：点「🩺 立即体检」后实时显示阶段（采集数据 → 模型分析 → 应用修复 → 完成）与<b>已接收字符数</b>——字符在涨就说明模型还在正常输出；推理型模型输出几分钟到十几分钟属正常；</li>
+              <li><b>中途可取消</b>：体检运行中按钮变为「⏹ 取消体检」，点击即中断模型调用（结果标记已取消），随时可重新开始；</li>
+              <li><b>每日自动体检</b>：卡片底部开关控制（距上次 ≥24h 且新增错误达标才真正调用模型，不空烧）；</li>
+              <li><b>失败也透明</b>：模型不可达/无响应时会显示确切原因，并自动换最多 2 个备用模型重试。</li>
+            </ul>
+            <p><b>技能版本与回滚</b>：技能中心每个技能卡有「⏱ 版本」按钮——每次编辑/自修复/清除覆盖/回滚前都会自动保存完整提示词快照（保留最近 20 份），点「⏪ 回滚到此版」一键恢复；回滚前当前状态也会先存快照，所以<b>任何操作都可逆</b>。自学技能（🧬）只新增不覆盖，天然安全。</p>
+            <div class="hb-tip">💡 卡在任务里反复失败时，agent 收到系统干预提示也会主动查看「可按需安装的技能」清单并请求安装匹配技能——先找技能再硬试。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🔧 运行组件体检（Git / Node / OCR / 打包环境）</summary>
+          <div class="hb-body">
+            <p>「更多 → 🔧 运行组件」（独立视图，v1.0.606 起不再挤在设置页底部）→ <kbd>🔍 立即体检</kbd>：一次检查七类外部组件的状态、版本，每项未就绪的直接给<b>可点的修复按钮</b>：</p>
+            <ol>
+              <li><b>OCR 组件</b>：未安装 → <kbd>⬇️ 一键安装（国内源）</kbd>（下载约 81MB、占用约 226MB，阿里云/清华镜像自动切换）；已装但落后 → <kbd>⬆ 更新到最新版</kbd> / <kbd>↩️ 恢复推荐版本</kbd>；</li>
+              <li><b>语音转写组件</b>：未装或依赖残缺 → <kbd>⬇️ 一键安装（国内源）</kbd>（约 75MB，清华 PyPI 源）；装好后若仍失败，这里会直接显示上次模型加载的真实原因（v1.0.611），不再是干巴巴一句「转写失败」；</li>
+              <li><b>dsh（PC 接管）</b>：未装 → <kbd>⬇️ 一键安装 dsh</kbd>（npmmirror 优先，官方源兜底）；<b>没装 Node 也没关系</b>——软件会先自装便携版 Node 再跑 npm（v1.0.612）；</li>
+              <li><b>Git / Node.js</b>：<kbd>⬇️ 一键安装便携版（国内镜像）</kbd> 由软件下载 zip 解到 <code>组件/</code> 目录，<b>不写系统 PATH、不需要管理员</b>；想用自己装的版本仍可点旁边的官网/镜像链接自装。</li>
+              <li><b>打包构建环境</b>：不完整 → <kbd>⬆ 一键升级（阿里云源）</kbd>，软件内执行 pip 安装，约 1-3 分钟；</li>
+              <li><b>企微</b>：未检测到 → 下载链接；已安装但未绑定 → 回工作台点「重新绑定」。</li>
+            </ol>
+            <div class="hb-tip">💡 修复动作完成后自动重新体检刷新状态；全部 ✅ 说明所有功能可用，🟡/❌ 项只影响对应功能，其余不受影响。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🎯 持续答题（无人值守）——怎么用</summary>
+          <div class="hb-body">
+            <p>适用于<b>剩余考试次数 = 无限</b>的学习平台考试。软件会自动：答题 → 交卷 → 读分 → 未过线自动「再考一次」试错，直到及格为止。</p>
+            <p><b>三种启动方式（都不需要手动输入任何代码）：</b></p>
+            <ol>
+              <li><b>一键入口（推荐）</b>：左侧窗口列表选中考试页面 → 侧栏顶端「<b>⚡ 快捷入口</b>」（默认折叠，点行尾 ▾ 展开）里点「<span class="tag">🎯 持续答题</span>」（行尾带「即发」标签）→ 自动开始，无需再点执行；</li>
+              <li><b>自定义快捷入口</b>：快捷入口编辑器里勾选「<span class="tag">即发</span>」（该入口在「⚡ 快捷入口」里带「即发」标签、点击直接执行）和「<span class="tag">续跑</span>」（启用自动续跑）——自己输入的任意考试任务也能自动续跑。</li>
+            </ol>
+            <p><b>自动续跑机制：</b></p>
+            <ul>
+              <li>每轮考试结束（finish）时，若未达及格分 → 软件自动开<b>全新会话</b>继续下一轮，最多自动续跑 <b>6 次</b>；</li>
+              <li>每轮答案与归因都记录在产物库 <code>产物库/知识库/题库/答题记录_&lt;考试名&gt;_&lt;日期&gt;.md</code>，新会话靠它接续状态；</li>
+              <li>及格即停；需要人工确认、出现异常或你点了停止时也会停。</li>
+            </ul>
+            <div class="hb-warn">⚠️ 无限次数考试才建议用无人值守；剩余次数有限的考试请用「📝 网页答题/填表」入口，存疑题会先问你。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🎓 学习中心（无人值守）——怎么用</summary>
+          <div class="hb-body">
+            <p>在学习中心自动<b>逐门完成全部未学课程</b>：学习地图 → 进课程 → 按任务类型处理 → 领证书 → 回地图下一门，直到全部学完。</p>
+            <ul>
+              <li><b>启动</b>：企微里打开学习中心页面 → 左侧窗口列表选中它 → 点导航顶端「⚡ 快捷入口」里的「<span class="tag">🎓 学习中心</span>」→ 自动开跑；</li>
+              <li><b>任务类型自动判定</b>：视频 → 自动拖到结尾播完；文档 → 点「立即学习」即完成；考试 → 自动进入考试详情（读及格分/剩余次数）→「开始考试」→ 无限次数自动试错提分（同持续答题）；</li>
+              <li><b>进度记录</b>：每门完成写入 <code>产物库/产出/学习进度_&lt;日期&gt;.md</code>，中断后再次启动会接着未完成的课继续，不会重复；</li>
+              <li>已学完的课程从「未学习」列表消失；全部学完或列表为空时自动收尾汇报。</li>
+            </ul>
+            <div class="hb-tip">💡 一次启动只跑「未学习」tab 的课程，已学课程不动。</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🔁 自动续跑机制 & 停止任务</summary>
+          <div class="hb-body">
+            <ul>
+              <li>自动续跑由「🎯 持续答题」入口或勾选了「续跑」的快捷入口触发（v1.0.308 起聊天栏不再放 🔁 按钮，续跑属于学习任务专用）；</li>
+              <li>随时点 <kbd>⏹ 停止</kbd> 可中断当前任务（自动续跑链也会停止）；</li>
+              <li>每轮正常耗时约 <b>3-6 分钟</b>；单轮内连续 10 分钟无输出会自动熔断并提示，可点「继续」或重新发起。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>⚡ 快捷入口管理</summary>
+          <div class="hb-body">
+            <ul>
+              <li>左侧栏 <kbd>✏️ 编辑</kbd> 打开编辑器：新增 / 删除 / 排序 / 改提示词；</li>
+              <li>每个入口可勾选：<span class="tag">即发</span> 在「⚡ 快捷入口」里标「即发」、点击直接执行（不再显示在聊天框上方）、<span class="tag">续跑</span> 启用自动续跑；</li>
+              <li>点「🤖 AI 生成」用一句话描述需求，可自动生成一组入口；</li>
+              <li>归类规则：普通入口（提示词类）显示在<b>聊天框上方标签</b>，点击填入输入框；勾了「即发」的重规则任务收在左侧<b>「⚡ 快捷入口」</b>（导航顶端那一组，默认折叠）里，行尾带「即发」标签，点击直接执行。</li>
+              <li>输入框上方的快捷标签与左侧栏入口是同一份数据，行为一致。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>📝 答题策略说明（为什么这样答）</summary>
+          <div class="hb-body">
+            <ul>
+              <li><b>先查知识库</b>：产物库 <code>知识库/课件/</code> 目录有对应课件/制度原文时以原文作答（内部考题多出自课件/制度原文）；</li>
+              <li><b>历史台账复用</b>：同名考试直接复用 <code>答题记录_*.md</code> 里已锁定/已排除的结论；</li>
+              <li><b>单变量试错</b>：无限次数考试每轮只改 1 道存疑题，按分数变化归因（升=锁定、降=排除）；</li>
+              <li><b>判断题技巧</b>：绝对化表述（"仅…可""必须"）和权限类说法优先怀疑「错误」；</li>
+              <li><b>作答纪律</b>：严禁点纯数字题号跳题；交卷防重复点击；每轮落盘台账。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>🌙 深色模式（设置 → 界面偏好）</summary>
+          <div class="hb-body">
+            <p>勾选后<b>即时切换</b>深色主题并自动记忆，下次启动直接生效（无需进设置页）。</p>
+            <ul>
+              <li>覆盖主界面、聊天窗格、弹窗、输入框、滚动条；个别第三方嵌入元素可能仍是浅色。</li>
+              <li>偏好保存在本机浏览器存储（WebView2 持久化），换电脑/清缓存后需重新勾选。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>🛡 管理员模式自启动（开机免 UAC 提权运行）</summary>
+          <div class="hb-body">
+            <p>设置页有两个自启开关：<b>开机自动启动</b>（普通权限，写注册表）与 <b>🛡 管理员模式自启动</b>（计划任务最高权限）。</p>
+            <ul>
+              <li>管理员自启 = 开机后软件<b>直接以管理员模式运行</b>（系统级命令/保护目录/HKLM 全解锁），日常无需再手动提权。</li>
+              <li>勾选/取消时会弹 <b>UAC 确认框</b>（创建或删除计划任务需要），点「是」完成。</li>
+              <li>两个开关<b>互斥</b>：勾管理员自启会自动清理普通注册表自启，反之亦然。</li>
+              <li>「启动后隐藏主窗口」对两种方式都生效（管理员自启模式下切换隐藏设置也会弹一次 UAC）。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>🪟 托盘与任务栏图标（单图标设计 / 幽灵图标清理）</summary>
+          <div class="hb-body">
+            <p>软件运行时托盘只有<b>一个</b>图标（tooltip 显示版本号）：</p>
+            <ul>
+              <li><b>双击托盘图标</b>或右键「打开伴侣」= 还原主窗口；右键「退出」= 完全退出（同时清托盘图标）。</li>
+              <li>点 X 关闭窗口会弹选择：<b>最小化到托盘</b>（后台常驻）或 <b>退出程序</b>。</li>
+              <li>若见到<b>两个相同图标</b>：其中一个是历史版本残留的"幽灵图标"（鼠标划过即被系统回收），或重启一次资源管理器即可清空。</li>
+              <li>explorer 崩溃/重启后托盘图标自动重新注册，无需重启软件。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>📦 打包并重启（版本管理卡）</summary>
+          <div class="hb-body">
+            <p>设置 →「维护 · 版本 · 安全」→ 版本管理卡 →「📦 打包并重启（用当前源码）」：程序 2 秒后退出 → 后台打包 1-2 分钟 → 自动启动新版本。</p>
+            <ul>
+              <li>打包期间对话活动会被<b>保护拦下</b>（稍后再试），软件内一键打包自动跳过该保护。</li>
+              <li>自我修复成功提交代码后，报告会提醒"修复已写源码，需到版本管理打包才生效"。</li>
+              <li>版本自动 +1 并登记进「版本管理」（近 3 版可一键回退）。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>🔍 绑定后状态显示"未连接"？</summary>
+          <div class="hb-body">
+            <ul>
+              <li>重新绑定成功后，顶部状态条可能有几秒延迟——点「刷新状态」立即更新。</li>
+              <li>若始终"后端未响应/0 个可访问"：确认企业微信本体正在运行且用带调试参数的方式启动过一次；再到「企微」页看「重新绑定」是否报错。</li>
+              <li>自动绑定失败（WinError 2）= 配置里没有企微 exe 路径，手动「重新绑定」一次即可。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>⏱ 关于启动速度（动画期间在做什么）</summary>
+          <div class="hb-body">
+            <p>加载动画期间软件在做：解压运行环境 → 初始化 Flask 与全部路由 → 启动 WebView2 → 前端轮询 /api/status 确认就绪。实测全程 <b>2-4 秒</b>（服务就绪后动画 1.7 秒内淡出）。</p>
+            <ul>
+              <li><b>开机后第一次启动慢</b>多为杀毒软件实时扫描解压目录——建议把 <b>%TEMP% 下的 _MEI* 目录</b>与软件 dist 目录加入杀毒白名单。</li>
+              <li>远程桌面（RustDesk 等）里动画观感会更久，是远程帧率所致，本机实际已就绪。</li>
+              <li>开启了「开机自启」后软件随系统在后台常驻，日常从托盘打开是<b>秒开</b>。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>❓ 常见问题</summary>
+          <div class="hb-body">
+            <ul>
+              <li><b>点「持续答题」没反应？</b>——先确认左侧已选中企微考试窗口；未选中会提示。</li>
+              <li><b>任务停在某轮不动？</b>——看工作台是否显示「需人工继续」，点「继续」；或 ⏹ 停止后重新发起。</li>
+              <li><b>成绩和答案在哪看？</b>——产物库 → 知识库/题库 → 答题记录_&lt;考试名&gt;_&lt;日期&gt;.md（含每轮分数轨迹与归因）。</li>
+              <li><b>续跑 6 次还没过？</b>——停止续跑并汇报最优分数与仍存疑的题，可人工接管或重新发起。</li>
+              <li><b>学习中心遇到"0 题空考试"？</b>——答题页读不到任何题目（只有答题卡/计时）时软件会自动退出跳过并记台账，不影响完成课程（v1.0.262+）。</li>
+              <li><b>模型后台显示在请求但我没用它？</b>——任务在启动那一刻用的是当时的默认模型；中途在「模型管理」改默认只对新任务生效。想彻底不用某模型，把它「禁用」或删除即可。</li>
+              <li><b>想自定义考试任务？</b>——用「🎯 持续答题」入口或勾了「续跑」的快捷入口直接输入，例如"完成当前考试，及格 80 分"。</li>
+              <li><b>程序点了没反应/消失了？</b>——重启 dist\WeComCompanion.exe；日志在 dist\companion.log。</li>
+              <li><b>点右上角 × 会退出吗？</b>——默认最小化到托盘（右下角图标），右键托盘图标可选真正退出；单实例运行，重复启动会自动聚焦已有窗口。</li>
+              <li><b>「模型管理」里测试/跑分没问题，体检却说模型没返回？</b>——体检 prompt 较大，部分本地/共享模型会空转；v1.0.362 起会自动吃满重试并换备用模型，仍失败时按提示换默认模型或等网络空闲再试。</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>📂 文件与数据位置</summary>
+          <div class="hb-body">
+            <ul>
+              <li>产物库（agent 产出；知识库分 课件/题库/制度 三分类）：软件目录下 <code>dist\产物库\</code>；</li>
+              <li>运行日志（v1.0.275 起并入产物库）：<code>dist\产物库\日志\companion.log</code>；</li>
+              <li>Token 用量明细存档（按月分档，独立于运行日志）：<code>dist\产物库\日志\usage_YYYYMM.jsonl</code>——「🧠 模型」页的 📊 Token 用量统计卡片即读此文件聚合展示（今日/近 7/14/30 天、每日输入输出柱状图、按模型排行）；</li>
+              <li>模型 / 快捷入口 / 技能等配置：软件目录 <code>config.json</code>。</li>
+            </ul>
+          </div>
+        </details>
+
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="js/01-core.js"></script>
+<script src="js/02-nav-quicklinks.js"></script>
+<script src="js/03-experiences.js"></script>
+<script src="js/04-skills.js"></script>
+<script src="js/05-connectors-status.js"></script>
+<script src="js/06-windows.js"></script>
+<script src="js/07-usage-models.js"></script>
+<script src="js/08-templates.js"></script>
+<script src="js/09-chat-render.js"></script>
+<script src="js/10-chat.js"></script>
+<script src="js/11-workspace-kb-study.js"></script>
+<script src="js/15-asr-component.js"></script>
+<script src="js/13-dashboard.js"></script>
+<script src="js/14-mic.js"></script>
+<!-- v1.0.588：16-bigeditor.js 原单独挂在弹层 DOM 之后，现并回脚本块（文件只定义函数，
+     不在加载期取 DOM，位置安全）。15 与 13 的相对顺序【不要】按数字调整——两者都猴子补丁
+     window.openView（15-asr-component.js:70 → 13-dashboard.js:132），后加载者在外层，
+     换序会改变 openView 的副作用先后。 -->
+<script src="js/12-init.js"></script>
+<!-- v1.0.602 实时预览大图：小预览条看不清页面具体内容时，点预览图放大看。
+     皮肤复用 v1.0.598 的 .modal-veil / .modal-card，不新起一套弹窗样式。 -->
+<div class="modal-veil" id="shotViewer" style="display:none" onclick="if(event.target===this)closeShotViewer()">
+  <div class="modal-card" style="--mw:1200px;padding:12px 14px">
+    <div class="sv-head"><b id="shotViewerTitle">📸 实时预览</b>
+      <span class="sv-tip" id="shotViewerTip">画面继续实时刷新</span>
+      <button class="ghost smbtn" style="margin-left:auto" onclick="closeShotViewer()" aria-label="关闭大图">✕ 关闭</button>
+    </div>
+    <img id="shotViewerImg" alt="窗口大图预览" />
+    <div class="sv-foot">点空白处或按 Esc 关闭</div>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ===== 技能专项优化（编辑弹层） ===== -->
+<div class="overlay" id="skillEditorOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <h3 id="skillEditorTitle">🧩 技能专项优化</h3>
+      <span id="seBadge"></span>
+      <button class="ghost" onclick="closeSkillEditor()" aria-label="关闭" title="关闭">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="grid2" style="gap:10px">
+        <div class="field"><label>技能 ID（不可改）</label><input id="se_id" disabled/></div>
+        <div class="field"><label>名称</label><input id="se_name"/></div>
+        <div class="field"><label>图标（emoji）</label><input id="se_icon"/></div>
+      </div>
+      <div class="field"><label>描述</label><input id="se_desc"/></div>
+      <div class="field"><label>提示词（prompt，注入给 agent 的能力说明，本技能的灵魂）</label><textarea id="se_prompt" rows="7" style="font-family:ui-monospace,Menlo,Consolas,monospace"></textarea></div>
+      <div class="field">
+        <label>使用工具（点击选择/取消，从全部内置工具中挑选）</label>
+        <div id="se_tools"></div>
+      </div>
+      <div class="field" style="border-top:1px dashed var(--border); padding-top:12px">
+        <label>🤖 通过 Agent 优化：填写优化诉求，AI 基于当前定义生成建议并回填到上方表单</label>
+        <textarea id="se_req" rows="2" placeholder="例如：提取信息时更严谨，补充异常兜底与重试步骤…"></textarea>
+        <div class="row" style="margin-top:6px">
+          <button class="primary" onclick="optimizeSkill()">🤖 生成优化建议</button>
+          <span class="sub" style="margin:0">生成结果仅回填表单，需「保存修改」并确认后才落盘</span>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="padding:12px 18px; border-top:1px solid var(--border)">
+      <button class="primary" onclick="saveSkillEditor()">保存修改</button>
+      <button class="ghost" id="seResetBtn" onclick="resetSkillOverride()">恢复内置定义</button>
+      <button class="ghost" id="seDeleteBtn" style="display:none;color:var(--err-fg)" onclick="deleteCustomSkill(__skillDraft&&__skillDraft.sid)">🗑 删除该技能</button>
+      <button class="ghost" onclick="closeSkillEditor()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 模板 AI 生成（agent 聊天式需求确认） ===== -->
+<div class="overlay" id="tplAIOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <h3>🤖 AI 生成模板</h3>
+      <label style="margin:0 0 0 auto; display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--muted)">生成模型
+        <select id="tplaiModel" style="width:auto; padding:4px 8px"></select>
+      </label>
+      <button class="ghost" onclick="closeTplAI()" aria-label="关闭" title="关闭">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="tpl-chat" id="tplaiChat"></div>
+    </div>
+    <div class="tpl-chat-input">
+      <input id="tplaiInput" placeholder="描述你要的模板，如：做一个周报总结模板，输入本周事项，输出要点 JSON…" onkeydown="if(event.key==='Enter')tplAISend()"/>
+      <button class="primary" id="tplaiSendBtn" onclick="tplAISend()">发送</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== v1.0.366 模板快速选择器（工作台入口：选择 → 填空 → 运行 → 结果就地展示） ===== -->
+<div class="overlay" id="tplPickerOverlay">
+  <div class="panel" style="width:min(680px,94%);max-height:86vh;overflow:auto">
+    <div class="panel-head">
+      <h3>📋 任务模板</h3>
+      <button class="ghost" style="margin-left:auto" onclick="document.getElementById('tplPickerOverlay').classList.remove('show')" aria-label="关闭" title="关闭">✕</button>
+    </div>
+    <div class="panel-body" id="tplPickerBody">
+      <div class="sub" id="tplPickerHint">选择一个模板开始：填好字段 → 运行 → 结构化结果可直接复制或发到企微。常用模板会自动排前。</div>
+      <input id="tplPickerSearch" placeholder="搜索模板…" style="width:100%;margin:8px 0" oninput="renderTplPicker()"/>
+      <div id="tplPickerList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 通用确认弹窗（改动要点可折叠） ===== -->
+<div class="overlay" id="confirmOverlay">
+  <div class="panel confirm-modal">
+    <div class="panel-head">
+      <h3 id="confirmTitle">确认改动</h3>
+      <button class="ghost" onclick="closeConfirm()" aria-label="关闭" title="关闭">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="sub" id="confirmIntro" style="margin-bottom:10px"></div>
+      <div class="diff-list" id="confirmBody"></div>
+    </div>
+    <div class="row" style="padding:12px 18px; border-top:1px solid var(--border)">
+      <button class="primary" id="confirmOkBtn" onclick="confirmOk()">确认保存</button>
+      <button class="ghost" onclick="closeConfirm()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 快捷入口编辑弹窗 ===== -->
+<div class="overlay" id="quickEditorOverlay">
+  <div class="panel" style="width:720px; max-width:92vw">
+    <div class="panel-head">
+      <h3>⚡ 快捷入口编辑</h3>
+      <button class="ghost" style="margin:0 0 0 auto" onclick="openQuickAI()">🤖 AI 生成</button>
+      <span class="sub" style="margin:0 0 0 12px">普通入口点击填入提示词；勾「即发」=在「⚡ 快捷入口」里带「即发」标签、点击直接执行；勾「续跑」=启用自动续跑(考试未过自动开新会话)</span>
+      <button class="ghost" onclick="closeQuickEditor()" aria-label="关闭" title="关闭">✕</button>
+    </div>
+    <div class="panel-body" style="max-height:58vh; overflow-y:auto">
+      <div id="quickEditBox"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="ghost" onclick="qeAdd()">＋ 新增入口</button>
+      </div>
+    </div>
+    <div class="row" style="padding:12px 18px; border-top:1px solid var(--border)">
+      <button class="primary" onclick="qeSave()">保存</button>
+      <button class="ghost" onclick="closeQuickEditor()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 快捷入口 AI 生成（agent 聊天式需求确认） ===== -->
+<div class="overlay" id="qlAIOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <h3>🤖 AI 生成快捷入口</h3>
+      <label style="margin:0 0 0 auto; display:flex; align-items:center; gap:6px; font-size:var(--fs-sm); color:var(--muted)">生成模型
+        <select id="qlaiModel" style="width:auto; padding:4px 8px"></select>
+      </label>
+      <button class="ghost" onclick="closeQuickAI()" aria-label="关闭" title="关闭">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="tpl-chat" id="qlaiChat"></div>
+    </div>
+    <div class="tpl-chat-input">
+      <input id="qlaiInput" placeholder="描述你要的快捷入口，如：做一个财务审核快捷入口，审核时按红绿规则逐张核对单据…" onkeydown="if(event.key==='Enter')quickAISend()"/>
+      <button class="primary" id="qlaiSendBtn" onclick="quickAISend()">发送</button>
+    </div>
+  </div>
+</div>
+<!-- ===== 输入框放大编辑弹窗 ===== -->
+<div class="overlay" id="bigEditorOverlay">
+  <div class="panel" style="width:80vw;max-width:880px;height:76vh;display:flex;flex-direction:column">
+    <div class="panel-head">
+      <h3>⤢ 放大编辑</h3>
+      <button class="ghost" style="margin:0 0 0 auto" onclick="closeBigEditor()" aria-label="关闭" title="关闭">✕</button>
+    </div>
+    <div class="panel-body" style="flex:1;min-height:0;display:flex">
+      <textarea id="bigEditText" style="flex:1;width:100%;height:100%;resize:none;font-size:var(--fs-lg);line-height:1.6;padding:10px" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();bigEditorSend();}"></textarea>
+    </div>
+    <div class="row" style="padding:12px 18px;border-top:1px solid var(--border)">
+      <button class="primary" onclick="bigEditorSend()">完成并发送</button>
+      <button class="ghost" onclick="closeBigEditor()">取消</button>
+      <span class="sub" style="margin-left:8px">Ctrl+Enter 亦可发送</span>
+    </div>
+  </div>
+</div>
+    <!-- v1.0.573：关闭确认层（web 同款字体/风格，替代 Win32 自绘弹窗；选择经 js_api 回传） -->
+    <!-- v1.0.582：相似任务固化为技能——模态弹窗（用户反馈：流内卡片不醒目，改弹窗选择） -->
+    <div id="skillSuggestOverlay" style="display:none">
+      <div class="close-ask">
+        <h3>🔁 检测到重复执行的相似任务</h3>
+        <p class="ca-row">你已经 <b id="ssCount">3</b> 次执行相似任务「<b id="ssTitle"></b>」，执行流程与结果基本一致。</p>
+        <p class="ca-row">固化为技能后，以后<b>一句话</b>就能复用同样的执行流程，无需再完整描述任务。</p>
+        <div class="ca-remember" style="display:block"><label>任务内容（将作为技能提示词，可在技能中心编辑）：</label>
+          <textarea id="ssPrompt" rows="3" readonly style="width:100%;margin-top:4px;font-size:var(--fs-xs)"></textarea></div>
+        <div class="ca-btns">
+          <button class="primary" onclick="createSkillFromSuggest(this)">⚙️ 固化为技能</button>
+          <button class="ghost" onclick="skillSuggestDismiss()">忽略</button>
+        </div>
+      </div>
+    </div>
+    <div id="closeAskOverlay" style="display:none">
+      <div class="close-ask">
+        <h3>关闭窗口后想做什么？</h3>
+        <p class="ca-row">「<b>最小化到托盘</b>」程序保留在后台运行，从系统托盘双击打开。</p>
+        <p class="ca-row">「<b>退出程序</b>」完全关闭，下次需要手动启动。</p>
+        <label class="ca-remember"><input type="checkbox" id="closeAskRemember"/> 下次不再询问，按本次选择直接执行</label>
+        <div class="ca-btns">
+          <button class="primary" onclick="closeAskChoose(true)">最小化到托盘</button>
+          <button class="ghost" onclick="closeAskChoose(false)">退出程序</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+            

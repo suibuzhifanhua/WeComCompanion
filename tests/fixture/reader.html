@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>阅读器</title>
+<style>
+body{margin:0;background:#333;color:#fff;font-family:'Microsoft YaHei'}
+#bar{position:fixed;bottom:0;left:0;right:0;background:#222;padding:8px;display:flex;gap:8px;align-items:center}
+#cv{display:block;background:#fff}
+</style>
+</head>
+<body>
+<canvas id="cv" width="900" height="620" tabindex="0"></canvas>
+<div id="bar">
+  <span id="pg">1 / 5</span>
+  <span id="mode"></span>
+  <input id="jump" type="number" placeholder="页码" style="width:70px;color:#000">
+</div>
+<script>
+// mode: dom=只有下一页按钮 / key=只响应键盘 / input=只有页码输入框
+var mode = (location.hash || '#dom').slice(1) || 'dom';
+document.getElementById('mode').textContent = 'mode=' + mode;
+
+var PAGES = [
+  '第一条 分支机构应当配合有权机关依法查询冻结扣划业务。',
+  '第二条 协助执法工作应当在二十四小时之内办理完毕并归档。',
+  '第三条 查询冻结扣划资料应当保存十年以上不得擅自销毁。',
+  '第四条 遇到有权机关执法人员应当核验工作证件与法律文书。',
+  '第五条 严禁向被查询对象泄露协助执法的相关信息和资料。'
+];
+var cur = 0;
+
+function draw() {
+  var c = document.getElementById('cv');
+  var g = c.getContext('2d');
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = '#000';
+  g.font = '28px "Microsoft YaHei"';
+  g.fillText('协助执法业务管理指引', 40, 80);
+  g.font = '24px "Microsoft YaHei"';
+  g.fillText('第 ' + (cur + 1) + ' 页', 40, 140);
+  g.font = '26px "Microsoft YaHei"';
+  var txt = PAGES[cur] || '';
+  for (var i = 0; i < txt.length; i += 16) {
+    g.fillText(txt.substr(i, 16), 40, 220 + Math.floor(i / 16) * 44);
+  }
+  document.getElementById('pg').textContent = (cur + 1) + ' / ' + PAGES.length;
+}
+
+function next() {
+  if (cur < PAGES.length - 1) { cur++; draw(); return true; }
+  return false;
+}
+
+function goto(n) {
+  n = parseInt(n, 10);
+  if (n >= 1 && n <= PAGES.length) { cur = n - 1; draw(); return true; }
+  return false;
+}
+
+if (mode === 'dom') {
+  var b = document.createElement('button');
+  b.textContent = '下一页';
+  b.className = 'page-next-btn';
+  b.onclick = next;
+  document.getElementById('bar').appendChild(b);
+} else if (mode === 'key') {
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'PageDown' || e.key === 'ArrowRight') next();
+  });
+}
+document.getElementById('jump').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') goto(e.target.value);
+});
+
+draw();
+</script>
+</body>
+</html>

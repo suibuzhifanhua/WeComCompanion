@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>课件采集测试页</title>
+<style>body{margin:0}iframe{width:1000px;height:700px;border:0}</style>
+</head>
+<body>
+<div id="hint">测试父页面（模拟学习平台课程任务页外壳）</div>
+<script>
+  document.write('<iframe id="cv" src="reader.html' + (location.hash || '#dom') + '"></iframe>');
+</script>
+</body>
+</html>
