@@ -313,3 +313,15 @@ curl -s -F "file=@xxx.pdf" -H "Cookie: __wc_token=$TOK" http://127.0.0.1:8787/ap
 # 产物库
 # 源码侧：企微伴侣/产物库    exe 侧：企微伴侣/dist/产物库（实际使用）
 ```
+<div align="center">
+
+如果你用这个项目提高了效率，不妨请我喝杯咖啡。
+
+  <table>
+    <tr>
+      <td align="center"><img width="220" alt="image" src="https://github.com/user-attachments/assets/f29f5a9d-b93e-49b2-8ac3-5c2dfcf1224f" /></td>
+      <td align="center"><img width="220" alt="image" src="https://github.com/user-attachments/assets/9e1f04f8-9b7e-42c6-a3f5-7dc23933fdb0" /></td>
+    </tr>
+  </table>
+
+</div>
